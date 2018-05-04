@@ -9,15 +9,26 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class SubstringSearch {
 	private SubstringSearch() {
 	}
 
-	private ArrayList<String> allPatterns = new ArrayList<>();
-	private ArrayList<Integer> firstTenOccurrences = new ArrayList<>(10);
-	//private Integer sequenceLength = 0;
+	class Result {
+		String pattern;
+		Integer cnt;
+		ArrayList<Integer> firstTenOccurrences;
+	}
+
 	private String sequence;
+	private ArrayList<String> allPatterns = new ArrayList<>();
+	private CopyOnWriteArrayList<Result> resultsList = new CopyOnWriteArrayList<>();
+
+	private ExecutorService executorService;
 
 	private void readPattern(String patternFile) {
 		boolean isPattern = false;
@@ -40,6 +51,9 @@ public class SubstringSearch {
 					stringBuilder.append(line);
 				}
 			}
+			if (isPattern) {
+				allPatterns.add(stringBuilder.toString());
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -55,7 +69,6 @@ public class SubstringSearch {
 			String line;
 			while ((line = reader.readLine()) != null) {
 				if (!line.startsWith(">")) {
-					//sequenceLength += line.length();
 					stringBuilder.append(line);
 				}
 			}
@@ -66,33 +79,36 @@ public class SubstringSearch {
 		}
 	}
 
-	private int searcher(String pattern, String sequence) {
+	private void threadedSearcher(String pattern, String sequence) {
 		int cnt = 0;
-		int res = 0;
+		int pos = 0;
 		int start = 0;
 		StringSearch bmhRaita = new BoyerMooreHorspoolRaita();
+		ArrayList<Integer> first10 = new ArrayList<>(10);
+		Result done = new Result();
 
-		while (res != -1){
-			res = bmhRaita.searchString(sequence, start, pattern);
-			if (res != -1) {
+		while (pos != -1) {
+			pos = bmhRaita.searchString(sequence, start, pattern);
+			if (pos != -1) {
 				++cnt;
 				if (cnt <= 10) {
-					firstTenOccurrences.add(res + 1);
+					first10.add(pos + 1);
 				}
-				start = res + 1;
+				start = pos + 1;
 			}
 		}
+		done.cnt = cnt;
+		done.firstTenOccurrences = first10;
+		done.pattern = pattern;
 
-		return cnt;
+		resultsList.add(done);
 	}
 
-	private void printResult(String pattern) {
-		int cnt;
-
-		cnt = searcher(pattern, sequence);
-		System.out.println(pattern + " " + cnt);
-		System.out.println(firstTenOccurrences);
-		firstTenOccurrences.clear();
+	private void startThreads(ArrayList<String> patterns) {
+		for (int i = 0; i < patterns.size(); ++i) {
+			final int x = i;
+			executorService.execute(() -> threadedSearcher(patterns.get(x), sequence));
+		}
 	}
 
 	public static void main(String[] args) {
@@ -104,8 +120,19 @@ public class SubstringSearch {
 		}
 		ss.readPattern(args[0]);
 		ss.readSequence(args[1]);
-		for (int i = 0; i < ss.allPatterns.size(); ++i) {
-			ss.printResult(ss.allPatterns.get(i));
+		ss.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+		ss.startThreads(ss.allPatterns);
+		ss.executorService.shutdown();
+		try {
+			ss.executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+
+		for (int i = 0; i < ss.resultsList.size(); ++i) {
+			System.out.println(ss.resultsList.get(i).pattern + ": " + ss.resultsList.get(i).cnt);
+			System.out.println(ss.resultsList.get(i).firstTenOccurrences);
 		}
 	}
 }

@@ -1,3 +1,7 @@
+import com.eaio.stringsearch.StringSearch;
+import com.eaio.stringsearch.BoyerMooreHorspoolRaita;
+// from https://github.com/johannburkard/StringSearch
+
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -11,9 +15,9 @@ public class SubstringSearch {
 	}
 
 	private ArrayList<String> allPatterns = new ArrayList<>();
-	//private HashMap<String, Integer> allSequences = new HashMap<>(); TODO
-	private ArrayList<String> allSequences = new ArrayList<>();
 	private ArrayList<Integer> firstTenOccurrences = new ArrayList<>(10);
+	//private Integer sequenceLength = 0;
+	private String sequence;
 
 	private void readPattern(String patternFile) {
 		boolean isPattern = false;
@@ -42,32 +46,20 @@ public class SubstringSearch {
 		}
 	}
 
-	private void readSequences(String sequencesFile) {
-		boolean isSequence = false;
-		int sequenceLength;
+	private void readSequence(String sequenceFile) {
 
 		StringBuilder stringBuilder = new StringBuilder();
 
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sequencesFile),
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sequenceFile),
 			StandardCharsets.ISO_8859_1))) {
 			String line;
-			// TODO
 			while ((line = reader.readLine()) != null) {
-				//sequenceLength = line.length();
-				if (line.startsWith(">")) {
-					if (isSequence) {
-						sequenceLength = stringBuilder.toString().length() - line.length();
-						allSequences.add(stringBuilder.toString());
-						//allSequences.putIfAbsent(stringBuilder.toString(), sequenceLength);
-						isSequence = false;
-						//sequenceLength = 0;
-						stringBuilder = new StringBuilder();
-					}
-				} else {
-					isSequence = true;
+				if (!line.startsWith(">")) {
+					//sequenceLength += line.length();
 					stringBuilder.append(line);
 				}
 			}
+			sequence = stringBuilder.toString();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -76,23 +68,31 @@ public class SubstringSearch {
 
 	private int searcher(String pattern, String sequence) {
 		int cnt = 0;
-		int pos = 0;
+		int res = 0;
+		int start = 0;
+		StringSearch bmhRaita = new BoyerMooreHorspoolRaita();
 
-		if (cnt <= 10) {
-			firstTenOccurrences.add(pos);
+		while (res != -1){
+			res = bmhRaita.searchString(sequence, start, pattern);
+			if (res != -1) {
+				++cnt;
+				if (cnt <= 10) {
+					firstTenOccurrences.add(res + 1);
+				}
+				start = res + 1;
+			}
 		}
-		return 0;
+
+		return cnt;
 	}
 
 	private void printResult(String pattern) {
 		int cnt;
 
-		for (String sequence : allSequences) {
-			cnt = searcher(pattern, sequence);
-			System.out.println(pattern + " " + cnt);
-			System.out.println(firstTenOccurrences);
-			firstTenOccurrences.clear();
-		}
+		cnt = searcher(pattern, sequence);
+		System.out.println(pattern + " " + cnt);
+		System.out.println(firstTenOccurrences);
+		firstTenOccurrences.clear();
 	}
 
 	public static void main(String[] args) {
@@ -103,7 +103,7 @@ public class SubstringSearch {
 			System.exit(-1);
 		}
 		ss.readPattern(args[0]);
-		ss.readSequences(args[1]);
+		ss.readSequence(args[1]);
 		for (int i = 0; i < ss.allPatterns.size(); ++i) {
 			ss.printResult(ss.allPatterns.get(i));
 		}

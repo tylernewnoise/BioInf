@@ -8,20 +8,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-//TODO positions, first 10, correct output, trove libs
-
 public class SubstringSearch {
 	private SubstringSearch() {
 	}
 
+	private class resultsTuple {
+		int count;
+		ArrayList<Integer> first10;
+
+		resultsTuple(int count, ArrayList<Integer> first10) {
+			this.count = count;
+			this.first10 = first10;
+		}
+	}
+
 	private String sequence;
-	private ArrayList<String> allPatterns = new ArrayList<>();
-	private HashMap<Integer, HashMap<Integer, String>> patternsWitTheirLength3 = new HashMap<>();
-	private HashMap<String, Integer> results = new HashMap<>();
+	private ArrayList<String> allPatternsList = new ArrayList<>();
+	private HashMap<Integer, HashMap<Integer, String>> lengthPatternMap = new HashMap<>();
+	private HashMap<String, resultsTuple> results = new HashMap<>();
 
 	private void readPattern(String patternFile) {
 		boolean isPattern = false;
-
 		StringBuilder stringBuilder = new StringBuilder();
 
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(patternFile),
@@ -31,9 +38,7 @@ public class SubstringSearch {
 			while ((line = reader.readLine()) != null) {
 				if (line.startsWith(">")) {
 					if (isPattern) {
-						// packe die patterns der Reihe nach in eine liste
-						allPatterns.add(stringBuilder.toString());
-						// berechne länge des pattern
+						allPatternsList.add(stringBuilder.toString());
 						addPatternToList(stringBuilder.toString());
 						isPattern = false;
 						stringBuilder = new StringBuilder();
@@ -44,8 +49,7 @@ public class SubstringSearch {
 				}
 			}
 			if (isPattern) {
-				// packe die patterns der Reihe nach in eine liste
-				allPatterns.add(stringBuilder.toString());
+				allPatternsList.add(stringBuilder.toString());
 				addPatternToList(stringBuilder.toString());
 			}
 		} catch (IOException e) {
@@ -55,23 +59,22 @@ public class SubstringSearch {
 	}
 
 	private void addPatternToList(String pattern) {
-		// erstelle hashmap mit länge, pattern die zu der länge passsen
-		if (patternsWitTheirLength3.containsKey(pattern.length())) {
-			patternsWitTheirLength3.get(pattern.length()).put(pattern.hashCode(), pattern);
+		if (lengthPatternMap.containsKey(pattern.length())) {
+			lengthPatternMap.get(pattern.length()).put(pattern.hashCode(), pattern);
 		} else {
 			HashMap<Integer, String> tmp = new HashMap<>();
 			tmp.put(pattern.hashCode(), pattern);
-			patternsWitTheirLength3.put(pattern.length(), tmp);
+			lengthPatternMap.put(pattern.length(), tmp);
 		}
 	}
 
 	private void readSequence(String sequenceFile) {
-
 		StringBuilder stringBuilder = new StringBuilder();
 
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(sequenceFile),
 			StandardCharsets.ISO_8859_1))) {
 			String line;
+
 			while ((line = reader.readLine()) != null) {
 				if (!line.startsWith(">")) {
 					stringBuilder.append(line);
@@ -85,20 +88,28 @@ public class SubstringSearch {
 	}
 
 	private void searchRK(HashMap<Integer, String> patternsRK, int patternLength) {
-		int seqHash;
+		int seqHash, pos;
 		StringBuilder stringBuilder = new StringBuilder();
 
 		for (int i = 0; i < sequence.length() - patternLength; ++i) {
+			pos = i + 1;
 			for (int j = i; j < i + patternLength; ++j) {
 				stringBuilder.append(sequence.charAt(j));
 			}
+
 			seqHash = stringBuilder.toString().hashCode();
 			if (patternsRK.containsKey(seqHash)) {
 				if (results.containsKey(patternsRK.get(seqHash))) {
-					int x = results.get(patternsRK.get(seqHash));
-					results.put(patternsRK.get(seqHash), ++x);
+					int cnt = results.get(patternsRK.get(seqHash)).count;
+					ArrayList<Integer> first10 = results.get(patternsRK.get(seqHash)).first10;
+					if (first10.size() < 10) {
+						first10.add(pos);
+					}
+					results.put(patternsRK.get(seqHash), new resultsTuple(++cnt, first10));
 				} else {
-					results.put(patternsRK.get(seqHash), 1);
+					ArrayList<Integer> first10 = new ArrayList<>();
+					first10.add(pos);
+					results.put(patternsRK.get(seqHash), new resultsTuple(1, first10));
 				}
 			}
 			stringBuilder = new StringBuilder();
@@ -106,19 +117,32 @@ public class SubstringSearch {
 	}
 
 	public static void main(String[] args) {
-		SubstringSearch ss = new SubstringSearch();
 		if (args.length < 2) {
-			System.err
-				.println("usage: java -jar SubstringSearch.jar <pattern.fasta> <sequence.fasta> ");
+			System.err.println("usage: java -jar SubstringSearch.jar <pattern.fasta> <sequence.fasta> ");
 			System.exit(-1);
 		}
+		SubstringSearch ss = new SubstringSearch();
+		System.out.println("Parsing pattern.fasta...");
 		ss.readPattern(args[0]);
+		System.out.println("Parsing sequence.fasta...");
 		ss.readSequence(args[1]);
-		System.out.println(ss.allPatterns);
-		System.out.println(ss.patternsWitTheirLength3);
-		for (Map.Entry<Integer, HashMap<Integer, String>> entry : ss.patternsWitTheirLength3.entrySet()) {
-			ss.searchRK(entry.getValue(), entry.getKey());
+		System.out.println("Searching for substrings...");
+		long tic = System.nanoTime();
+		for (Map.Entry<Integer, HashMap<Integer, String>> entry : ss.lengthPatternMap.entrySet()) {
+			if (entry.getValue().size() == 1) {
+				System.out.println(entry.getValue() + " should be run with BMH"); // TODO implement BMH
+				ss.searchRK(entry.getValue(), entry.getKey());
+			} else {
+				ss.searchRK(entry.getValue(), entry.getKey());
+			}
 		}
-		System.out.println(ss.results);
+		System.out.println();
+		for (String pattern : ss.allPatternsList) {
+			System.out.println(pattern + ": " + ss.results.get(pattern).count);
+			System.out.println(ss.results.get(pattern).first10);
+		}
+		double tac = System.nanoTime() - tic;
+		tac = tac / 1000000000;
+		System.out.println("Time: " + tac + "s");
 	}
 }

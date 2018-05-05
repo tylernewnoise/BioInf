@@ -1,7 +1,3 @@
-import com.eaio.stringsearch.StringSearch;
-import com.eaio.stringsearch.BoyerMooreHorspoolRaita;
-// from https://github.com/johannburkard/StringSearch
-
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -9,26 +5,19 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import java.util.ArrayList;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
+
+//TODO positions, first 10, correct output, trove libs
 
 public class SubstringSearch {
 	private SubstringSearch() {
 	}
 
-	class Result {
-		String pattern;
-		Integer cnt;
-		ArrayList<Integer> firstTenOccurrences;
-	}
-
 	private String sequence;
 	private ArrayList<String> allPatterns = new ArrayList<>();
-	private CopyOnWriteArrayList<Result> resultsList = new CopyOnWriteArrayList<>();
-
-	private ExecutorService executorService;
+	private HashMap<Integer, HashMap<Integer, String>> patternsWitTheirLength3 = new HashMap<>();
+	private HashMap<String, Integer> results = new HashMap<>();
 
 	private void readPattern(String patternFile) {
 		boolean isPattern = false;
@@ -42,7 +31,10 @@ public class SubstringSearch {
 			while ((line = reader.readLine()) != null) {
 				if (line.startsWith(">")) {
 					if (isPattern) {
+						// packe die patterns der Reihe nach in eine liste
 						allPatterns.add(stringBuilder.toString());
+						// berechne länge des pattern
+						addPatternToList(stringBuilder.toString());
 						isPattern = false;
 						stringBuilder = new StringBuilder();
 					}
@@ -52,11 +44,24 @@ public class SubstringSearch {
 				}
 			}
 			if (isPattern) {
+				// packe die patterns der Reihe nach in eine liste
 				allPatterns.add(stringBuilder.toString());
+				addPatternToList(stringBuilder.toString());
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
+		}
+	}
+
+	private void addPatternToList(String pattern) {
+		// erstelle hashmap mit länge, pattern die zu der länge passsen
+		if (patternsWitTheirLength3.containsKey(pattern.length())) {
+			patternsWitTheirLength3.get(pattern.length()).put(pattern.hashCode(), pattern);
+		} else {
+			HashMap<Integer, String> tmp = new HashMap<>();
+			tmp.put(pattern.hashCode(), pattern);
+			patternsWitTheirLength3.put(pattern.length(), tmp);
 		}
 	}
 
@@ -79,35 +84,24 @@ public class SubstringSearch {
 		}
 	}
 
-	private void threadedSearcher(String pattern, String sequence) {
-		int cnt = 0;
-		int pos = 0;
-		int start = 0;
-		StringSearch bmhRaita = new BoyerMooreHorspoolRaita();
-		ArrayList<Integer> first10 = new ArrayList<>(10);
-		Result done = new Result();
+	private void searchRK(HashMap<Integer, String> patternsRK, int patternLength) {
+		int seqHash;
+		StringBuilder stringBuilder = new StringBuilder();
 
-		while (pos != -1) {
-			pos = bmhRaita.searchString(sequence, start, pattern);
-			if (pos != -1) {
-				++cnt;
-				if (cnt <= 10) {
-					first10.add(pos + 1);
-				}
-				start = pos + 1;
+		for (int i = 0; i < sequence.length() - patternLength; ++i) {
+			for (int j = i; j < i + patternLength; ++j) {
+				stringBuilder.append(sequence.charAt(j));
 			}
-		}
-		done.cnt = cnt;
-		done.firstTenOccurrences = first10;
-		done.pattern = pattern;
-
-		resultsList.add(done);
-	}
-
-	private void startThreads(ArrayList<String> patterns) {
-		for (int i = 0; i < patterns.size(); ++i) {
-			final int x = i;
-			executorService.execute(() -> threadedSearcher(patterns.get(x), sequence));
+			seqHash = stringBuilder.toString().hashCode();
+			if (patternsRK.containsKey(seqHash)) {
+				if (results.containsKey(patternsRK.get(seqHash))) {
+					int x = results.get(patternsRK.get(seqHash));
+					results.put(patternsRK.get(seqHash), ++x);
+				} else {
+					results.put(patternsRK.get(seqHash), 1);
+				}
+			}
+			stringBuilder = new StringBuilder();
 		}
 	}
 
@@ -120,19 +114,11 @@ public class SubstringSearch {
 		}
 		ss.readPattern(args[0]);
 		ss.readSequence(args[1]);
-		ss.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-		ss.startThreads(ss.allPatterns);
-		ss.executorService.shutdown();
-		try {
-			ss.executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
+		System.out.println(ss.allPatterns);
+		System.out.println(ss.patternsWitTheirLength3);
+		for (Map.Entry<Integer, HashMap<Integer, String>> entry : ss.patternsWitTheirLength3.entrySet()) {
+			ss.searchRK(entry.getValue(), entry.getKey());
 		}
-
-		for (int i = 0; i < ss.resultsList.size(); ++i) {
-			System.out.println(ss.resultsList.get(i).pattern + ": " + ss.resultsList.get(i).cnt);
-			System.out.println(ss.resultsList.get(i).firstTenOccurrences);
-		}
+		System.out.println(ss.results);
 	}
 }

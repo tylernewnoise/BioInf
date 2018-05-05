@@ -1,3 +1,5 @@
+package ue_bioinf_substringsearch_bm_rk_combined;
+
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -23,6 +25,7 @@ public class SubstringSearch {
 	}
 
 	private String sequence;
+	private char[] sequCharAr;
 	private ArrayList<String> allPatternsList = new ArrayList<>();
 	private HashMap<Integer, HashMap<Integer, String>> lengthPatternMap = new HashMap<>();
 	private HashMap<String, resultsTuple> results = new HashMap<>();
@@ -81,6 +84,7 @@ public class SubstringSearch {
 				}
 			}
 			sequence = stringBuilder.toString();
+			sequCharAr = sequence.toCharArray();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -116,6 +120,102 @@ public class SubstringSearch {
 		}
 	}
 
+	/* thx to en.wikipedia.org */
+
+	/**
+	 * Returns the index within this string of the first occurrence of the
+	 * specified substring. If it is not a substring, return -1.
+	 *
+	 * @param haystack The string to be scanned
+	 * @param p        The target string to search
+	 */
+	private void boyerMoore(char[] haystack, String p) {
+		char[] needle = p.toCharArray();
+		int pos;
+		int charTable[] = makeCharTable(needle);
+		int offsetTable[] = makeOffsetTable(needle);
+		for (int i = needle.length - 1, j; i < haystack.length; ) {
+			for (j = needle.length - 1; needle[j] == haystack[i]; --i, --j) {
+				if (j == 0) {
+					pos = i + 1;
+					if (results.containsKey(p)) {
+						int cnt = results.get(p).count;
+						ArrayList<Integer> first10 = results.get(p).first10;
+						if (first10.size() < 10) {
+							first10.add(pos);
+						}
+						results.put(p, new resultsTuple(++cnt, first10));
+					} else {
+						ArrayList<Integer> first10 = new ArrayList<>();
+						first10.add(pos);
+						results.put(p, new resultsTuple(1, first10));
+					}
+					break;
+				}
+			}
+			i += Math.max(offsetTable[needle.length - 1 - j], charTable[haystack[i]]);
+		}
+	}
+
+	/**
+	 * Makes the jump table based on the mismatched character information.
+	 */
+	private static int[] makeCharTable(char[] needle) {
+		final int ALPHABET_SIZE = 256;
+		int[] table = new int[ALPHABET_SIZE];
+		for (int i = 0; i < table.length; ++i) {
+			table[i] = needle.length;
+		}
+		for (int i = 0; i < needle.length - 1; ++i) {
+			table[needle[i]] = needle.length - 1 - i;
+		}
+		return table;
+	}
+
+	/**
+	 * Makes the jump table based on the scan offset which mismatch occurs.
+	 */
+	private static int[] makeOffsetTable(char[] needle) {
+		int[] table = new int[needle.length];
+		int lastPrefixPosition = needle.length;
+		for (int i = needle.length - 1; i >= 0; --i) {
+			if (isPrefix(needle, i + 1)) {
+				lastPrefixPosition = i + 1;
+			}
+			table[needle.length - 1 - i] = lastPrefixPosition - i + needle.length - 1;
+		}
+		for (int i = 0; i < needle.length - 1; ++i) {
+			int slen = suffixLength(needle, i);
+			table[slen] = needle.length - 1 - i + slen;
+		}
+		return table;
+	}
+
+	/**
+	 * Is needle[p:end] a prefix of needle?
+	 */
+	private static boolean isPrefix(char[] needle, int p) {
+		for (int i = p, j = 0; i < needle.length; ++i, ++j) {
+			if (needle[i] != needle[j]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Returns the maximum length of the substring ends at p and is a suffix.
+	 */
+	private static int suffixLength(char[] needle, int p) {
+		int len = 0;
+		for (int i = p, j = needle.length - 1;
+		     i >= 0 && needle[i] == needle[j]; --i, --j) {
+			len += 1;
+		}
+		return len;
+	}
+	/* ******** Boyer Moore ******** */
+
 	public static void main(String[] args) {
 		if (args.length < 2) {
 			System.err.println("usage: java -jar SubstringSearch.jar <pattern.fasta> <sequence.fasta> ");
@@ -127,11 +227,11 @@ public class SubstringSearch {
 		System.out.println("Parsing sequence.fasta...");
 		ss.readSequence(args[1]);
 		System.out.println("Searching for substrings...");
+		System.out.println();
 		long tic = System.nanoTime();
 		for (Map.Entry<Integer, HashMap<Integer, String>> entry : ss.lengthPatternMap.entrySet()) {
 			if (entry.getValue().size() == 1) {
-				System.out.println(entry.getValue() + " should be run with BMH"); // TODO implement BMH
-				ss.searchRK(entry.getValue(), entry.getKey());
+				ss.boyerMoore(ss.sequCharAr, entry.getValue().values().toArray()[0].toString());
 			} else {
 				ss.searchRK(entry.getValue(), entry.getKey());
 			}

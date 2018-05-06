@@ -1,0 +1,79 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[ngerman]{babel}		%dt. Übersetzung und Umlaute
+\usepackage[utf8]{inputenc}		%Umlaute direkt eingeben
+\usepackage{paralist}			%bessere Listen
+\usepackage{listings}
+\usepackage{listings}
+\usepackage{fancyhdr}			%Headerstyles
+\usepackage[margin=2.0cm,headheight=40pt,top=3cm]{geometry}
+\pagestyle{fancy}
+
+\lstset{
+	basicstyle=\ttfamily,
+	columns=fullflexible,
+	frame=single,
+	breaklines=true,
+}
+\lstdefinestyle{customc}{
+	belowcaptionskip=1\baselineskip,
+	title=\lstname,
+	breaklines=true,
+	keepspaces=true,
+	flexiblecolumns=true,
+	tabsize=2, % ein tab = 2 spaces
+	numbers=left,
+	frame=single,
+	language=C,
+	showstringspaces=false
+}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\lhead{}
+\rhead{Grundlagen der Bioinformatik - Assignment1}
+\cfoot{}
+\rfoot{\thepage}
+\begin{document}
+	\parindent0pt
+	\paragraph{Analyse transcription factor GATA2}
+	\begin{itemize}
+		\item http://jaspar.genereg.net/matrix/MA0036.2/
+		\item Formel: TODO
+		\item Frequenzmatrix und info content TODO
+		\item ic für eine Stelle berechnen TODO
+		\item \begin{tabular}[t]{|c|p{10.5cm}|c|}
+			\hline 
+			Cancer & Title & PMID \\ 
+			\hline 
+			Prostate & GATA2 expression and biochemical recurrence following salvage radiation therapy for relapsing prostate cancer. & 28486040 \\ 
+			\hline 
+			Muscle/EBV related & Resolution of Multifocal Epstein-Barr Virus-Related Smooth Muscle Tumor in a Patient with GATA2 Deficiency Following Hematopoietic Stem Cell Transplantation. & 27924436 \\ 
+			\hline 
+			Leukemia & Clinical impact of GATA2 mutations in acute myeloid leukemia patients harboring CEBPA mutations: a study of the AML study group. & 27375010 \\ 
+			\hline 
+			Prostate & Whole Genomic Copy Number Alterations in Circulating Tumor Cells from Men with Abiraterone or Enzalutamide-Resistant Metastatic Castration-Resistant Prostate Cancer. & 27601596 \\ 
+			\hline 
+			Leukemia & Exome sequencing identifies highly recurrent somatic GATA2 and CEBPA mutations in acute erythroid leukemia. & 27389056 \\ 
+			\hline 
+			Leukemia & Acute lymphoblastic leukemia in a patient with MonoMAC syndrome/GATA2 haploinsufficiency. & 27232273 \\ 
+			\hline 
+			Muscle/EBV related & Association of GATA2 Deficiency With Severe Primary Epstein-Barr Virus (EBV) Infection and EBV-associated Cancers. & 27169477 \\ 
+			\hline 
+			Leukemia & Transcription factor gene GATA2: Association of leukemia and nonsynonymous to the synonymous substitution rate across five mammals. & 26850985 \\ 
+			\hline 
+		\end{tabular} 
+	\end{itemize}
+	
+	\paragraph{Substring search}\ \\
+	Wir haben für die Suche den Boyer-Moore-Horspool Algorithmus implementiert und somit eine durchschnittliche Laufzeit von $\mathcal{O}(\frac{n}{m})$ und im Worst-Case $\mathcal{O}(n \cdot m)$ .
+
+	\paragraph{Properties of Boyer Moore Algorithm}
+	\begin{enumerate}
+		\item Template: \verb|aaaaaaaaaaaaa|\\
+		Pattern: \verb|baaa|\\
+		Bei diesem Beispiel kann die \textit{bad character rule} nur um einen Index weiterschieben und die \textit{good suffix rule} kommt überhaupt nicht zum Tragen. Es wird also jedes mal komplett durch die innere Schleife $n$ durchgelaufen, daher die Komplexität $\mathcal{O}(m*n)$. Verhindern ließe sich das mit der \textit{Rule of Galil}.
+		\item Bei großen Alphabeten ist die Wahrscheinlichkeit höher, dass ein Zeichen gar nicht erst im Pattern ist, womit das Pattern durch die \textit{bad character rule} komplett geschoben werden kann. Besonders bei längeren Pattern ist dies von Vorteil. Es ist außerdem auch aufwendiger  die Shifts bei der \textit{good suffix rule} zu berechnen.
+		
+	\end{enumerate}
+
+
+\end{document}

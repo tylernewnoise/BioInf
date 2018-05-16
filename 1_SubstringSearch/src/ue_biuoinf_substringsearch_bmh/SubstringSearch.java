@@ -101,9 +101,9 @@ public class SubstringSearch {
 	}
 
 	private static int[] calcTable(char[] pattern) {
-		int[] table = new int[256];
+		int[] table = new int[127];
 
-		for (int i = 0; i < 256; ++i) {
+		for (int i = 0; i < 127; ++i) {
 			table[i] = pattern.length;
 		}
 		for (int i = 0; i < pattern.length - 1; ++i) {
@@ -129,13 +129,12 @@ public class SubstringSearch {
 		for (String p : ss.patternsList) {
 			ss.boyerMooreHorspool(ss.sequence, p);
 		}
-
+		double tac = System.nanoTime() - tic;
 		for (resultsTuple resultsTuple : ss.results) {
 			System.out.println(resultsTuple.pattern + ": " + resultsTuple.count);
 			System.out.println(resultsTuple.first10);
 		}
 
-		double tac = System.nanoTime() - tic;
 		tac = tac / 1000000000;
 		System.out.println("Time: " + tac + "s");
 	}

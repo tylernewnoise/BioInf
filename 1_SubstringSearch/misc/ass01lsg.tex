@@ -2,6 +2,8 @@
 \usepackage[ngerman]{babel}		%dt. Übersetzung und Umlaute
 \usepackage[utf8]{inputenc}		%Umlaute direkt eingeben
 \usepackage{paralist}			%bessere Listen
+\usepackage{hyperref}
+\usepackage{amsmath}
 \usepackage{listings}
 \usepackage{listings}
 \usepackage{fancyhdr}			%Headerstyles
@@ -36,10 +38,34 @@
 	\parindent0pt
 	\paragraph{Analyse transcription factor GATA2}
 	\begin{itemize}
-		\item http://jaspar.genereg.net/matrix/MA0036.2/
-		\item Formel: TODO
-		\item Frequenzmatrix und info content TODO
-		\item ic für eine Stelle berechnen TODO
+		\item Es gibt keinen Link zu GATA2 in JASPAR mit der Länge 5 und der Isoform .2. In der Isoform .2 gibt es die Länge 17 \url{http://jaspar.genereg.net/matrix/MA0036.2} und in Isoform .1 gibt es die Länge 5: \url{http://jaspar.genereg.net/matrix/MA0036.1}
+		\item Formel: $\sum_{i,j}p_{i,j} \cdot \text{log}(p_{i,j})$\footnote{\url{https://en.wikipedia.org/wiki/Position_weight_matrix\#Information_content}}
+		\item  PFM:	
+		\begin{tabular}[t]{|c|c|c|c|c|c|}
+			\hline 
+			A & 13 & 0 & 52 & 0 & 25 \\ 
+			\hline 
+			C & 13 & 5 & 0 & 0 & 7 \\ 
+			\hline 
+			G & 18 & 48 & 1 & 0 & 15 \\ 
+			\hline 
+			T & 9 & 0 & 0 & 53 & 6 \\ 
+			\hline 
+		\end{tabular}\ \\\\
+		PPM:
+		\begin{tabular}[t]{|c|c|c|c|c|c|}
+			\hline 
+			A & 0,13 & 0 & 0,52 & 0 & 0,25 \\ 
+			\hline 
+			C & 0,13 & 0,5 & 0 & 0 & 0,7 \\ 
+			\hline 
+			G & 0,18 & 0,48 & 0,1 & 0 & 0,15 \\ 
+			\hline 
+			T & 0,9 & 0 & 0 & 0,53 & 0,6 \\ 
+			\hline 
+		\end{tabular}\ \\\\
+		PWM: No idea...
+		\item IC für eine Stelle berechnen - no idea...
 		\item \begin{tabular}[t]{|c|p{10.5cm}|c|}
 			\hline 
 			Cancer & Title & PMID \\ 

@@ -24,8 +24,8 @@ final class FastaSequence {
 
     private void readSequenceFromFile(String file)
     {
-        List desc = new ArrayList();
-        List seq = new ArrayList();
+        List<String> desc = new ArrayList<>();
+        List<String> seq = new ArrayList<>();
         try {
             BufferedReader in = new BufferedReader(new FileReader(file));
             StringBuffer buffer = new StringBuffer();
@@ -56,8 +56,8 @@ final class FastaSequence {
         description = new String[desc.size()];
         sequence = new String[seq.size()];
         for (int i=0; i < seq.size(); i++) {
-            description[i]=(String) desc.get(i);
-            sequence[i]=(String) seq.get(i);
+            description[i]=desc.get(i);
+            sequence[i]= seq.get(i);
         }
 
     }

@@ -47,7 +47,9 @@ public class LocalAlignment {
 	private HashMap<Character, Integer> matrixRow = new HashMap<>(4); // Stores the position of the nucleobases from the matrix.txt.
 	// Trace safes the coordinates from fields as key and keeps a list with pointers to possible neighbours as value.
 	private HashMap<Coordinates<Integer, Integer, Character>, ArrayList<Coordinates<Integer, Integer, Character>>> trace = new HashMap<>();
-	private int overAllScore;
+	private int overAllScore = 0;
+	private int overAllMatches = 0;
+	private int overAllReps = 0;
 
 	private void readPairs(String pairsFile) {
 		int seqCount = 0;
@@ -216,7 +218,10 @@ public class LocalAlignment {
 				char s1 = pairs.get(0)[col];
 				char s2 = pairs.get(1)[row];
 				char s3 = '|';
-				if (s1 != s2) s3 = '.'; // Replacement. TODO count it!
+				if (s1 != s2) {
+					s3 = '.'; // Replacement.
+					overAllReps++;
+				} else overAllMatches++;
 				tmpal.add(0, s1);
 				tmpal.add(1, s3);
 				tmpal.add(2, s2);
@@ -246,8 +251,10 @@ public class LocalAlignment {
 			System.out.println();
 		}
 		System.out.println();
-
+		System.out.println("Length: " + alignment.size());
 		System.out.println("Score: " + overAllScore);
+		System.out.println("Matches: " + overAllMatches);
+		System.out.println("Replacements: " + overAllReps);
 	}
 
 	public static void main(String[] args) {

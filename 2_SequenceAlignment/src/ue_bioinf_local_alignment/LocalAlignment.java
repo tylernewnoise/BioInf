@@ -37,19 +37,21 @@ public class LocalAlignment {
 	}
 
 	private int[][] matrix = new int[4][4]; // 2-D int array for storing the matrix-values.
-	private int[][] table; // 2-D int array for calculating the alignments.
-	private int last_maximum = 0; // Last maximum we found.
-	private int r_max = 0; // Coordinates to the last maximum.
-	private int c_max = 0; // Coordinates to the last maximum.
+	private int[][] table; // 2-D int array for calculating the alignment.
+	private int score = 0; // Last maximum we found is the score.
+	private int rMax = 0; // Coordinates to the last maximum.
+	private int cMax = 0; // Coordinates to the last maximum.
 	private ArrayList<char[]> pairs = new ArrayList<>(2); // Stores the two sequences.
 	private ArrayList<ArrayList<Character>> alignment = new ArrayList<>(3); // Stores the alignment in printable form.
 	private HashMap<Character, Integer> matrixCol = new HashMap<>(4); // Stores the position of the nucleobases from the matrix.txt.
 	private HashMap<Character, Integer> matrixRow = new HashMap<>(4); // Stores the position of the nucleobases from the matrix.txt.
 	// Trace safes the coordinates from fields as key and keeps a list with pointers to possible neighbours as value.
-	private HashMap<Coordinates<Integer, Integer, Character>, ArrayList<Coordinates<Integer, Integer, Character>>> trace = new HashMap<>();
-	private int overAllScore = 0;
-	private int overAllMatches = 0;
+	private HashMap<Coordinates<Integer, Integer, Character>, ArrayList<Coordinates<Integer, Integer, Character>>>
+		trace = new HashMap<>();
+	private int overAllIns = 0;
 	private int overAllReps = 0;
+	private int overAllDels = 0;
+	private int overAllMatches = 0;
 
 	private void readPairs(String pairsFile) {
 		int seqCount = 0;
@@ -121,51 +123,51 @@ public class LocalAlignment {
 	}
 
 	private void buildTable() {
-		int gap_penalty = -2; // TODO change back to -8
-		int score;
-		int table_cols = pairs.get(0).length + 1;
-		int table_rows = pairs.get(1).length + 1;
-		int upper_left_nb;
-		int left_nb;
-		int upper_nb;
-		int max_nb;
-		for (int row = 1; row < table_rows; row++) {
-			for (int col = 1; col < table_cols; col++) {
+		int gapPenalty = -8;
+		int localScore;
+		int tableCols = pairs.get(0).length + 1;
+		int tableRows = pairs.get(1).length + 1;
+		int upperLeftNb;
+		int leftNb;
+		int upperNb;
+		int maxNb;
+		for (int row = 1; row < tableRows; row++) {
+			for (int col = 1; col < tableCols; col++) {
 				// Get score out of the given matrix.
-				score = matrix[matrixRow.get(pairs.get(1)[row - 1])][matrixCol.get(pairs.get(0)[col - 1])];
+				localScore = matrix[matrixRow.get(pairs.get(1)[row - 1])][matrixCol.get(pairs.get(0)[col - 1])];
 
-				// Calculate neighbours. max_nb stores the maximum of all three, to distinguish if
+				// Calculate neighbours. maxNb stores the maximum of all three, to distinguish if
 				// any of them are 'worthy' to be pointed on.
-				left_nb = table[row][col - 1] + gap_penalty;
-				upper_nb = table[row - 1][col] + gap_penalty;
-				upper_left_nb = table[row - 1][col - 1] + score;
-				max_nb = left_nb;
-				if (max_nb < upper_nb) max_nb = upper_nb;
-				if (max_nb < upper_left_nb) max_nb = upper_left_nb;
+				leftNb = table[row][col - 1] + gapPenalty;
+				upperNb = table[row - 1][col] + gapPenalty;
+				upperLeftNb = table[row - 1][col - 1] + localScore;
+				maxNb = leftNb;
+				if (maxNb < upperNb) maxNb = upperNb;
+				if (maxNb < upperLeftNb) maxNb = upperLeftNb;
 
 				// Set pointers. Only if at least one of the above is > 0.
-				if (left_nb > 0 || upper_nb > 0 || upper_left_nb > 0) {
+				if (leftNb > 0 || upperNb > 0 || upperLeftNb > 0) {
 					// Get maximum for actual position in table.
-					table[row][col] = Math.max(left_nb, Math.max(upper_nb, Math.max(upper_left_nb, 0)));
+					table[row][col] = Math.max(leftNb, Math.max(upperNb, Math.max(upperLeftNb, 0)));
 					ArrayList<Coordinates<Integer, Integer, Character>> tmp = new ArrayList<>();
-					// Add only fields to list which are last_maximum.
-					if (left_nb == max_nb) {
+					// Add only fields to list which are score.
+					if (leftNb == maxNb) {
 						tmp.add(new Coordinates<>(row, col - 1, 'l')); // left
 					}
-					if (upper_nb == max_nb) {
+					if (upperNb == maxNb) {
 						tmp.add(new Coordinates<>(row - 1, col, 'u')); // up
 					}
-					if (upper_left_nb == max_nb) {
+					if (upperLeftNb == maxNb) {
 						tmp.add(new Coordinates<>(row - 1, col - 1, 'd')); // diagonal
 					}
 					trace.put(new Coordinates<>(row, col, ' '), tmp);
 				} else table[row][col] = 0; // If not, set field to zero.
 
-				// Safe last maximum and its coordinates for the traceback.
-				if (table[row][col] >= last_maximum) {
-					last_maximum = table[row][col];
-					r_max = row;
-					c_max = col;
+				// Safe last maximum (aka score) and its coordinates for the traceback.
+				if (table[row][col] >= this.score) {
+					this.score = table[row][col];
+					rMax = row;
+					cMax = col;
 				}
 			}
 		}
@@ -175,12 +177,11 @@ public class LocalAlignment {
 		ArrayList<Coordinates<Integer, Integer, Character>> tmp;
 		ArrayList<Character> tmpal;
 		Coordinates<Integer, Integer, Character> c;
-		int row = r_max;
-		int col = c_max;
-		int score = 0;
+		int row = rMax;
+		int col = cMax;
+		int localScore = 0;
 		char type = ' ';
-		// Start at maximum position.
-		overAllScore = table[row][col];
+
 		do {
 			// Set coordinates for field to backtrace.
 			c = new Coordinates<>(row, col, ' ');
@@ -189,16 +190,14 @@ public class LocalAlignment {
 
 			// Run through list and get highest value and coordinates of fields.
 			for (Coordinates<Integer, Integer, Character> list : tmp) {
-				if (table[list.row][list.column] >= score) {
+				if (table[list.row][list.column] >= localScore) {
 					row = list.row;
 					col = list.column;
 					type = list.type;
-					score = table[row][col];
+					localScore = table[row][col];
 				}
 			}
-
-			overAllScore += score;
-			score = 0;
+			localScore = 0;
 
 			// Prepare list for output.
 			if (type == 'l') {
@@ -206,12 +205,14 @@ public class LocalAlignment {
 				tmpal.add(0, pairs.get(0)[row]);
 				tmpal.add(1, ' ');
 				tmpal.add(2, '_');
+				overAllDels++;
 				alignment.add(tmpal);
 			} else if (type == 'u') {
 				tmpal = new ArrayList<>(3);
 				tmpal.add(0, '_');
 				tmpal.add(1, ' ');
 				tmpal.add(2, pairs.get(1)[col]);
+				overAllIns++;
 				alignment.add(tmpal);
 			} else if (type == 'd') {
 				tmpal = new ArrayList<>(3);
@@ -231,6 +232,24 @@ public class LocalAlignment {
 	}
 
 	private void printAlignment() {
+		System.out.println("Length: " + alignment.size());
+		System.out.println("Score: " + score);
+		System.out.println("Matches: " + overAllMatches);
+		System.out.println("Replacements: " + overAllReps);
+		System.out.println("Deletions: " + overAllDels);
+		System.out.println("Insertions: " + overAllIns);
+		System.out.println("Alignment: ");
+		System.out.println();
+
+		for (int j = 0; j < alignment.get(0).size(); ++j) {
+			for (int i = alignment.size() - 1; i >= 0; --i) {
+				System.out.print(alignment.get(i).get(j));
+			}
+			System.out.println();
+		}
+	}
+
+	private void printTable() {
 		System.out.println("Table: ");
 		for (int i = 0; i < pairs.get(1).length + 1; ++i) {
 			for (int j = 0; j < pairs.get(0).length + 1; ++j) {
@@ -241,20 +260,6 @@ public class LocalAlignment {
 			}
 			System.out.println();
 		}
-		System.out.println();
-
-		System.out.println("Alignment: ");
-		for (int j = 0; j < alignment.get(0).size(); ++j) {
-			for (int i = alignment.size() - 1; i >= 0; --i) {
-				System.out.print(alignment.get(i).get(j));
-			}
-			System.out.println();
-		}
-		System.out.println();
-		System.out.println("Length: " + alignment.size());
-		System.out.println("Score: " + overAllScore);
-		System.out.println("Matches: " + overAllMatches);
-		System.out.println("Replacements: " + overAllReps);
 	}
 
 	public static void main(String[] args) {
@@ -277,5 +282,6 @@ public class LocalAlignment {
 		System.out.println("Done.");
 		System.out.println();
 		la.printAlignment();
+		//la.printTable();
 	}
 }

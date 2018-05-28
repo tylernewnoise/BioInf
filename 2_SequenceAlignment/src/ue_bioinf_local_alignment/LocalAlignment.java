@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class LocalAlignment {
@@ -17,19 +16,21 @@ public class LocalAlignment {
 		int row;
 		int column;
 
-		Coordinates(int col, int row) {
-			this.column = col;
+		Coordinates(int row, int col) {
 			this.row = row;
+			this.column = col;
 		}
 	}
 
-	private char[] alphabet = new char[4];
+	//private char[] alphabet = new char[4];
 	private int[][] matrix = new int[4][4];
 	private int[][] table;
 	private int max = 0;
 	private int r_max = 0;
 	private int c_max = 0;
-	private HashMap<Coordinates, String> trace = new HashMap<>();
+	private HashMap<Character, Integer> matrixCol = new HashMap<>(4);
+	private HashMap<Character, Integer> matrixRow = new HashMap<>(4);
+	private HashMap<Coordinates, ArrayList<Coordinates>> trace = new HashMap<>();
 	private ArrayList<char[]> pairs = new ArrayList<>(2);
 
 	private void readPairs(String pairsFile) {
@@ -73,13 +74,15 @@ public class LocalAlignment {
 					if (line.startsWith(" ")) {
 						for (int k = 0; k < line.length(); k++) {
 							if (Character.isLetter(line.charAt(k))) {
-								alphabet[c] = line.charAt(k);
+								matrixCol.putIfAbsent(line.charAt(k), c);
+								//alphabet[c] = line.charAt(k);
 								c++;
 							}
 						}
 					} else {
 						c = 0;
 						// Get values in matrix line by line, char by char.
+						matrixRow.putIfAbsent(line.charAt(0), r);
 						for (int k = 0; k < line.length(); k++) {
 							if (line.charAt(k) == '-') {
 								isNeg = true;
@@ -105,35 +108,36 @@ public class LocalAlignment {
 	private void buildTable() {
 		int gap_penalty = -2;
 		int score;
-		int pos_of_char_in_matrix_row;
-		int pos_of_char_in_matrix_col;
 		int table_cols = pairs.get(0).length + 1;
 		int table_rows = pairs.get(1).length + 1;
-		int up_left = 0;
-		int lef = 0;
-		int up_neigh = 0;
+		int upper_left_nb = 0;
+		int left_nb = 0;
+		int upper_nb = 0;
 
 		for (int row = 1; row < table_rows; row++) {
 			for (int col = 1; col < table_cols; col++) {
 				// Calculate Score (This is ugly, maybe a hashmap?)
-				for (pos_of_char_in_matrix_col = 0; pos_of_char_in_matrix_col < alphabet.length; pos_of_char_in_matrix_col++) {
-					if (pairs.get(0)[col - 1] == alphabet[pos_of_char_in_matrix_col]) break;
-				}
-				for (pos_of_char_in_matrix_row = 0; pos_of_char_in_matrix_row < alphabet.length; pos_of_char_in_matrix_row++) {
-					if (pairs.get(1)[row - 1] == alphabet[pos_of_char_in_matrix_row]) break;
-				}
-				score = matrix[pos_of_char_in_matrix_row][pos_of_char_in_matrix_col];
 
-				up_neigh = table[row - 1][col] + gap_penalty;
-				lef = table[row][col - 1] + gap_penalty;
-				up_left = table[row - 1][col - 1] + score;
-				System.out.println("#############");
+				score = matrix[matrixRow.get(pairs.get(1)[row - 1])][matrixCol.get(pairs.get(0)[col - 1])];
+
+				left_nb = table[row][col - 1] + gap_penalty;
+				upper_nb = table[row - 1][col] + gap_penalty;
+				upper_left_nb = table[row - 1][col - 1] + score;
+
+				//if (left_nb >= 0) trace.putIfAbsent(new Coordinates(row, col-1), new ArrayList<>());
+				//trace.put()
+/*				if (upper_nb >= 0) trace.putIfAbsent(new Coordinates(row-1, col), "l");
+				if (upper_left_nb >= 0) trace.putIfAbsent(new Coordinates(row-1, col-1), "l");*/
+
+				// TODO: set pointers
+
+/*				System.out.println("#############");
 				System.out.println("Row: " + row + " Col: " + col);
 				System.out.println("left Neighbour: " + lef);
 				System.out.println("up_neigh Neighbour: " + up_neigh);
 				System.out.println("up_left Neighbour: " + up_left);
 				System.out.println("#############");
-				System.out.println();
+				System.out.println();*/
 
 				// Calculate Max of left neighbour + gap, upper neighbour + gap, upper left neighbour + gap
 				table[row][col] = Math.max(table[row - 1][col] + gap_penalty,
@@ -161,8 +165,8 @@ public class LocalAlignment {
 		la.readPairs(args[0]);
 		System.out.println("Parsing matrix.txt...");
 		la.readMatrix(args[1]);
-		System.out.println();
-		System.out.println("Alphabet: " + Arrays.toString(la.alphabet));
+		//System.out.println();
+		//System.out.println("Alphabet: " + Arrays.toString(la.alphabet));
 		la.buildTable();
 		// print table
 		System.out.println();

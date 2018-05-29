@@ -6,4 +6,7 @@
 - kmp: uses the knuth-morris-pratt algorithm
 - bmh: uses the boyer-moore-horspool algorithm
 
+####Assignment 2 - Local Alignment
+
+- local_alignment: computes the local alignment of two dna sequences with the smith-waterman algorithm
  

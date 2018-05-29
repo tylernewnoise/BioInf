@@ -25,27 +25,30 @@ public class LocalAlignment {
 		}
 
 		public int hashCode() {
-			return this.row.hashCode() + this.column.hashCode();// + this.type.hashCode();
+			return this.row.hashCode() + this.column.hashCode() + this.type.hashCode();
 		}
 
 		@SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
 		public boolean equals(Object obj) {
 			return this.row.equals(((Coordinates<?, ?, ?>) obj).row)
-				&& this.column.equals(((Coordinates<?, ?, ?>) obj).column);
-			//&& this.type.equals(((Coordinates<?, ?, ?>) obj).type);
+				&& this.column.equals(((Coordinates<?, ?, ?>) obj).column)
+				&& this.type.equals(((Coordinates<?, ?, ?>) obj).type);
 		}
 	}
 
-	private int[][] matrix = new int[4][4]; // 2-D int array for storing the matrix-values.
+	private int[][] matrix = new int[4][4]; // 2-D int array for storing the matrix-values. We assume the alphabet
+	// is only 4 (DNA).
 	private int[][] table; // 2-D int array for calculating the alignment.
 	private int score = 0; // Last maximum we found is the score.
 	private int rMax = 0; // Coordinates to the last maximum.
 	private int cMax = 0; // Coordinates to the last maximum.
 	private ArrayList<char[]> pairs = new ArrayList<>(2); // Stores the two sequences.
-	private ArrayList<ArrayList<Character>> alignment = new ArrayList<>(3); // Stores the alignment in printable form.
-	private HashMap<Character, Integer> matrixCol = new HashMap<>(4); // Stores the position of the nucleobases from the matrix.txt.
-	private HashMap<Character, Integer> matrixRow = new HashMap<>(4); // Stores the position of the nucleobases from the matrix.txt.
-	// Trace safes the coordinates from fields as key and keeps a list with pointers to possible neighbours as value.
+	// Stores the alignment in printable form.
+	private ArrayList<ArrayList<Character>> alignment = new ArrayList<>(3);
+	// Stores the position of the nucleobases from the matrix.txt.
+	private HashMap<Character, Integer> matrixCol = new HashMap<>(4);
+	private HashMap<Character, Integer> matrixRow = new HashMap<>(4);
+	// Safes the coordinates from fields as key and keeps a list with pointers to possible neighbours as value.
 	private HashMap<Coordinates<Integer, Integer, Character>, ArrayList<Coordinates<Integer, Integer, Character>>>
 		trace = new HashMap<>();
 	private int overAllIns = 0;
@@ -70,7 +73,8 @@ public class LocalAlignment {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		// Create new table with sizes table[rows][cols].
+
+		// Create new table of the size of the sequences (table[rows][cols]).
 		table = new int[pairs.get(1).length + 1][pairs.get(0).length + 1];
 
 		// Fill first row with zeros.
@@ -85,7 +89,7 @@ public class LocalAlignment {
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(matrixFile),
 			StandardCharsets.UTF_8))) {
 			String line;
-			boolean isNeg = false;
+			boolean isNeg = false; // Is the value negative?
 			while ((line = reader.readLine()) != null) {
 				if (!line.startsWith("#")) {
 					// Get order of alphabet in the matrix.
@@ -133,11 +137,12 @@ public class LocalAlignment {
 		int maxNb;
 		for (int row = 1; row < tableRows; row++) {
 			for (int col = 1; col < tableCols; col++) {
-				// Get score out of the given matrix.
-				localScore = matrix[matrixRow.get(pairs.get(1)[row - 1])][matrixCol.get(pairs.get(0)[col - 1])];
+				// Get score of the given matrix: matrix[letter on actual row][letter on actual col].
+				localScore = matrix[matrixRow.get(pairs.get(1)[row - 1])]
+					[matrixCol.get(pairs.get(0)[col - 1])];
 
-				// Calculate neighbours. maxNb stores the maximum of all three, to distinguish if
-				// any of them are 'worthy' to be pointed on.
+				// Calculate neighbours. maxNb stores the maximum of all three, to distinguish if any
+				// of them are 'worthy' to be pointed on.
 				leftNb = table[row][col - 1] + gapPenalty;
 				upperNb = table[row - 1][col] + gapPenalty;
 				upperLeftNb = table[row - 1][col - 1] + localScore;
@@ -160,6 +165,7 @@ public class LocalAlignment {
 					if (upperLeftNb == maxNb) {
 						tmp.add(new Coordinates<>(row - 1, col - 1, 'd')); // diagonal
 					}
+					// Add the coordinates and the possible neighbours to map.
 					trace.put(new Coordinates<>(row, col, ' '), tmp);
 				} else table[row][col] = 0; // If not, set field to zero.
 
@@ -199,7 +205,7 @@ public class LocalAlignment {
 			}
 			localScore = 0;
 
-			// Prepare list for output.
+			// Prepare list for output and count deletions, insertions, replacements and matches.
 			if (type == 'l') {
 				tmpal = new ArrayList<>(3);
 				tmpal.add(0, pairs.get(0)[row]);

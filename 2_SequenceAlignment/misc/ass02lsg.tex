@@ -1,0 +1,97 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[ngerman]{babel}		%dt. Übersetzung und Umlaute
+\usepackage[utf8]{inputenc}		%Umlaute direkt eingeben
+\usepackage{paralist}			%bessere Listen
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{listings}
+\usepackage{fancyhdr}			%Headerstyles
+\usepackage[margin=2.0cm,headheight=40pt,top=3cm]{geometry}
+\pagestyle{fancy}
+
+\lstset{
+	basicstyle=\ttfamily,
+	columns=fullflexible,
+	frame=single,
+	breaklines=true,
+}
+\lstdefinestyle{customc}{
+	belowcaptionskip=1\baselineskip,
+	title=\lstname,
+	breaklines=true,
+	keepspaces=true,
+	flexiblecolumns=true,
+	tabsize=2, % ein tab = 2 spaces
+	numbers=left,
+	frame=single,
+	language=Java,
+	showstringspaces=false
+}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\lhead{}
+\rhead{Grundlagen der Bioinformatik - Assignment2}
+\cfoot{}
+\rfoot{\thepage}
+\begin{document}
+	\parindent0pt
+	\paragraph{Local Alignment}\ \\
+		Ausgabe zum gegebenen Beispiel:
+		\begin{verbatim}
+		Length:       70
+		Score:        163
+		Matches:      51
+		Replacements: 12
+		Deletions:    4
+		Insertions:   3
+		
+		Alignment: 
+		CTATCAACGATT_GAACTCCCAATGTGGCGAGCAACGGACGGCACAGCAGG_CAGC_CTTACTCCATGTT
+		||| |||.|||| |||| ||||.|||| |||.||||||||| |||||||.. ||.| .||...|.||.||
+		CTA_CAAGGATTCGAAC_CCCATTGTG_CGAACAACGGACG_CACAGCATTACACCTGTTTGCCGATATT
+		\end{verbatim}
+	
+	\paragraph{Global Alignment}\ \\
+	
+
+	\paragraph{Aligning real sequences}\ \\
+		Die Werte von http://www.bioinformatics.nl/emboss-explorer/output/407799: 
+		\begin{verbatim}
+		#=======================================
+		#
+		# Aligned_sequences: 2
+		# 1: NM_004985.3
+		# 2: NM_021284.6
+		# Matrix: /var/lib/emboss-explorer/output/407799/.datafile
+		# Gap_penalty: 8.0
+		# Extend_penalty: 8.0
+		#
+		# Length: 5419
+		# Identity:    3726/5419 (68.8%)
+		# Similarity:  3726/5419 (68.8%)
+		# Gaps:         872/5419 (16.1%)
+		# Score: 8775.0
+		# 
+		#
+		#=======================================
+		\end{verbatim}
+		Unsere Werte:
+		\begin{verbatim}
+		Length:       5423
+		Score:        8775
+		Matches:      3732
+		Replacements: 811
+		Deletions:    760
+		Insertions:   120
+		\end{verbatim}
+		Die score-Werte sind jeweils identisch, jedoch ist unser Alignment um 4 Stellen länger und hat mehr Matches. Wir erklären uns den Unterschied so, dass EMBOSS alle möglichen Pfade ab dem höchsten Score auswertet und diese dann auch noch ranked, nach Matches/Replacements/Delitions/Insertions. Unser Programm geht lediglich den Pfad vom letzten Maximalscore zurück. Wir müssten uns also alle möglichen Pfade ansehen und auswerten.
+	
+	
+	
+	
+	
+	
+	
+	
+\end{document}

@@ -6,67 +6,71 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class LocalAlignment {
 	private LocalAlignment() {
 	}
 
 	// Data structure to store coordinates and the alignment type (insertion, deletion, match).
-	private class Coordinates<R, C, T> {
-		R row;
-		C column;
-		T type;
+	private class Coordinates {
+		int row;
+		int column;
+		char type;
 
-		Coordinates(R r, C c, T t) {
+		Coordinates(int r, int c, char t) {
 			this.row = r;
 			this.column = c;
 			this.type = t;
 		}
-
-		public int hashCode() {
-			return this.row.hashCode() + this.column.hashCode() + this.type.hashCode();
-		}
-
-		@SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-		public boolean equals(Object obj) {
-			return this.row.equals(((Coordinates<?, ?, ?>) obj).row)
-				&& this.column.equals(((Coordinates<?, ?, ?>) obj).column)
-				&& this.type.equals(((Coordinates<?, ?, ?>) obj).type);
-		}
 	}
 
-	private int[][] matrix = new int[4][4]; // 2-D int array for storing the matrix-values. We assume the alphabet
-	// is only 4 (DNA).
-	private int[][] table; // 2-D int array for calculating the alignment.
-	private int score = 0; // Last maximum we found is the score.
-	private int rMax = 0; // Coordinates to the last maximum.
-	private int cMax = 0; // Coordinates to the last maximum.
-	private ArrayList<char[]> pairs = new ArrayList<>(2); // Stores the two sequences.
+	private class Cell {
+		List<Coordinates> content = new ArrayList<>();
+		int simscore = 0;
+	}
+
+	private Cell[][] similarityTable;
+	// Last maximum we found is the score.
+	private int scoreMax = 0;
+	// Coordinates to the last maximum.
+	private int rMax = 0;
+	private int cMax = 0;
+	// Stores the two sequences.
+	private char[] seq1;
+	private char[] seq2;
 	// Stores the alignment in printable form.
-	private ArrayList<ArrayList<Character>> alignment = new ArrayList<>(3);
+	private List<Character> alignmentList1 = new ArrayList<>();
+	private List<Character> alignmentList2 = new ArrayList<>();
+	private List<Character> alignmentList3 = new ArrayList<>();
+	// 2-D int array for storing the matrix-values. We assume the alphabet is only 4 (DNA).
+	private int[][] matrix = new int[4][4];
 	// Stores the position of the nucleobases from the matrix.txt.
 	private HashMap<Character, Integer> matrixCol = new HashMap<>(4);
 	private HashMap<Character, Integer> matrixRow = new HashMap<>(4);
-	// Safes the coordinates from fields as key and keeps a list with pointers to possible neighbours as value.
-	private HashMap<Coordinates<Integer, Integer, Character>, ArrayList<Coordinates<Integer, Integer, Character>>>
-		trace = new HashMap<>();
-	private int overAllIns = 0;
-	private int overAllReps = 0;
-	private int overAllDels = 0;
-	private int overAllMatches = 0;
+	private int allIns = 0;
+	private int allReps = 0;
+	private int allDels = 0;
+	private int allMatches = 0;
 
 	private void readPairs(String pairsFile) {
-		int seqCount = 0;
+		boolean readSeq1 = false;
 
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pairsFile),
 			StandardCharsets.UTF_8))) {
 			String line;
 			while ((line = reader.readLine()) != null) {
-				if (!line.startsWith(">") && seqCount <= 2) {
-					pairs.add(line.toCharArray());
-					seqCount++;
-					if (seqCount == 2) break;
+				if (!line.startsWith(">")) {
+					if (readSeq1) {
+						seq2 = new char[line.length()];
+						seq2 = line.toCharArray();
+						break; // Only read two sequences.
+					}
+					seq1 = new char[line.length()];
+					seq1 = line.toCharArray();
+					readSeq1 = true;
 				}
 			}
 		} catch (IOException e) {
@@ -74,12 +78,15 @@ public class LocalAlignment {
 			System.exit(-1);
 		}
 
-		// Create new table of the size of the sequences (table[rows][cols]).
-		table = new int[pairs.get(1).length + 1][pairs.get(0).length + 1];
+		// Create new similarityTable of the size of the sequences (similarityTable[rows][cols]).
+		similarityTable = new Cell[seq2.length + 1][seq1.length + 1];
 
-		// Fill first row with zeros.
-		for (int i = 0; i < pairs.get(1).length; ++i) {
-			table[i][0] = 0;
+		// Fill the table with zeros.
+		Cell tmp = new Cell();
+		for (int i = 0; i < seq2.length + 1; ++i) {
+			for (int j = 0; j < seq1.length + 1; ++j) {
+				similarityTable[i][j] = tmp;
+			}
 		}
 	}
 
@@ -129,49 +136,54 @@ public class LocalAlignment {
 	private void buildTable() {
 		int gapPenalty = -8;
 		int localScore;
-		int tableCols = pairs.get(0).length + 1;
-		int tableRows = pairs.get(1).length + 1;
+		int tableCols = seq1.length + 1;
+		int tableRows = seq2.length + 1;
 		int upperLeftNb;
 		int leftNb;
 		int upperNb;
 		int maxNb;
 		for (int row = 1; row < tableRows; row++) {
+			System.out.print('\r');
+			System.out.print("Processing similarityTable... Columns: " + tableCols + ", Rows: " + tableRows
+				+ ", Processing Row: " + (row + 1) + "...");
+
 			for (int col = 1; col < tableCols; col++) {
 				// Get score of the given matrix: matrix[letter on actual row][letter on actual col].
-				localScore = matrix[matrixRow.get(pairs.get(1)[row - 1])]
-					[matrixCol.get(pairs.get(0)[col - 1])];
+				localScore = matrix[matrixRow.get(seq2[row - 1])][matrixCol.get(seq1[col - 1])];
 
 				// Calculate neighbours. maxNb stores the maximum of all three, to distinguish if any
 				// of them are 'worthy' to be pointed on.
-				leftNb = table[row][col - 1] + gapPenalty;
-				upperNb = table[row - 1][col] + gapPenalty;
-				upperLeftNb = table[row - 1][col - 1] + localScore;
+				leftNb = similarityTable[row][col - 1].simscore + gapPenalty;
+				upperNb = similarityTable[row - 1][col].simscore + gapPenalty;
+				upperLeftNb = similarityTable[row - 1][col - 1].simscore + localScore;
+
 				maxNb = leftNb;
 				if (maxNb < upperNb) maxNb = upperNb;
 				if (maxNb < upperLeftNb) maxNb = upperLeftNb;
 
-				// Set pointers. Only if at least one of the above is > 0.
-				if (leftNb > 0 || upperNb > 0 || upperLeftNb > 0) {
-					// Get maximum for actual position in table.
-					table[row][col] = Math.max(leftNb, Math.max(upperNb, Math.max(upperLeftNb, 0)));
-					ArrayList<Coordinates<Integer, Integer, Character>> tmp = new ArrayList<>();
-					// Add only fields to list which are score.
+				// Set pointers. Only if at least one of the above is > 0 aka maxNb > 0.
+				if (maxNb > 0) {
+					// Get maximum for actual position in similarityTable.
+					Cell celltmp = new Cell();
+					celltmp.simscore = Math.max(leftNb, Math.max(upperNb, Math.max(upperLeftNb, 0)));
+
+					// Add only fields to list which are a maxScore.
 					if (leftNb == maxNb) {
-						tmp.add(new Coordinates<>(row, col - 1, 'l')); // left
+						celltmp.content.add(new Coordinates(row, col - 1, 'l'));
 					}
 					if (upperNb == maxNb) {
-						tmp.add(new Coordinates<>(row - 1, col, 'u')); // up
+						celltmp.content.add(new Coordinates(row - 1, col, 'u'));
 					}
 					if (upperLeftNb == maxNb) {
-						tmp.add(new Coordinates<>(row - 1, col - 1, 'd')); // diagonal
+						celltmp.content.add(new Coordinates(row - 1, col - 1, 'd'));
 					}
 					// Add the coordinates and the possible neighbours to map.
-					trace.put(new Coordinates<>(row, col, ' '), tmp);
-				} else table[row][col] = 0; // If not, set field to zero.
+					similarityTable[row][col] = celltmp;
+				}
 
 				// Safe last maximum (aka score) and its coordinates for the traceback.
-				if (table[row][col] >= this.score) {
-					this.score = table[row][col];
+				if (similarityTable[row][col].simscore >= scoreMax) {
+					scoreMax = similarityTable[row][col].simscore;
 					rMax = row;
 					cMax = col;
 				}
@@ -180,92 +192,75 @@ public class LocalAlignment {
 	}
 
 	private void traceBack() {
-		ArrayList<Coordinates<Integer, Integer, Character>> tmp;
-		ArrayList<Character> tmpal;
-		Coordinates<Integer, Integer, Character> c;
+		List<Coordinates> tmp;
 		int row = rMax;
 		int col = cMax;
 		int localScore = 0;
 		char type = ' ';
 
 		do {
-			// Set coordinates for field to backtrace.
-			c = new Coordinates<>(row, col, ' ');
 			// Get list with possible candidates.
-			tmp = new ArrayList<>(trace.get(c));
+			tmp = similarityTable[row][col].content;
 
 			// Run through list and get highest value and coordinates of fields.
-			for (Coordinates<Integer, Integer, Character> list : tmp) {
-				if (table[list.row][list.column] >= localScore) {
-					row = list.row;
-					col = list.column;
-					type = list.type;
-					localScore = table[row][col];
+			for (Coordinates entry : tmp) {
+				if (similarityTable[entry.row][entry.column].simscore >= localScore) {
+					row = entry.row;
+					col = entry.column;
+					type = entry.type;
+					localScore = similarityTable[row][col].simscore;
 				}
 			}
+
 			localScore = 0;
 
 			// Prepare list for output and count deletions, insertions, replacements and matches.
 			if (type == 'l') {
-				tmpal = new ArrayList<>(3);
-				tmpal.add(0, pairs.get(0)[row]);
-				tmpal.add(1, ' ');
-				tmpal.add(2, '_');
-				overAllDels++;
-				alignment.add(tmpal);
+				alignmentList1.add(seq1[col]);
+				alignmentList2.add(' ');
+				alignmentList3.add('_');
+				allDels++;
 			} else if (type == 'u') {
-				tmpal = new ArrayList<>(3);
-				tmpal.add(0, '_');
-				tmpal.add(1, ' ');
-				tmpal.add(2, pairs.get(1)[col]);
-				overAllIns++;
-				alignment.add(tmpal);
+				alignmentList1.add('_');
+				alignmentList2.add(' ');
+				alignmentList3.add(seq2[row]);
+				allIns++;
 			} else if (type == 'd') {
-				tmpal = new ArrayList<>(3);
-				char s1 = pairs.get(0)[col];
-				char s2 = pairs.get(1)[row];
-				char s3 = '|';
-				if (s1 != s2) {
-					s3 = '.'; // Replacement.
-					overAllReps++;
-				} else overAllMatches++;
-				tmpal.add(0, s1);
-				tmpal.add(1, s3);
-				tmpal.add(2, s2);
-				alignment.add(tmpal);
+				char s1 = seq1[col];
+				char s2 = '|';
+				char s3 = seq2[row];
+				if (s1 != s3) {
+					s2 = '.'; // Replacement.
+					allReps++;
+				} else allMatches++;
+				alignmentList1.add(s1);
+				alignmentList2.add(s2);
+				alignmentList3.add(s3);
 			}
-		} while (table[row][col] != 0);
+		} while (similarityTable[row][col].simscore != 0);
 	}
 
 	private void printAlignment() {
-		System.out.println("Length: " + alignment.size());
-		System.out.println("Score: " + score);
-		System.out.println("Matches: " + overAllMatches);
-		System.out.println("Replacements: " + overAllReps);
-		System.out.println("Deletions: " + overAllDels);
-		System.out.println("Insertions: " + overAllIns);
-		System.out.println("Alignment: ");
+		System.out.println("Length: \t\t" + alignmentList1.size());
+		System.out.println("Score: \t\t\t" + scoreMax);
+		System.out.println("Matches: \t\t" + allMatches);
+		System.out.println("Replacements: \t" + allReps);
+		System.out.println("Deletions: \t\t" + allDels);
+		System.out.println("Insertions: \t" + allIns);
 		System.out.println();
-
-		for (int j = 0; j < alignment.get(0).size(); ++j) {
-			for (int i = alignment.size() - 1; i >= 0; --i) {
-				System.out.print(alignment.get(i).get(j));
-			}
-			System.out.println();
+		System.out.println("Alignment: ");
+		for (int i = alignmentList1.size() - 1; i >= 0; --i) {
+			System.out.print(alignmentList1.get(i));
 		}
-	}
-
-	private void printTable() {
-		System.out.println("Table: ");
-		for (int i = 0; i < pairs.get(1).length + 1; ++i) {
-			for (int j = 0; j < pairs.get(0).length + 1; ++j) {
-				if (table[i][j] >= 0) {
-					System.out.print(" ");
-				}
-				System.out.print(" " + table[i][j]);
-			}
-			System.out.println();
+		System.out.println();
+		for (int i = alignmentList2.size() - 1; i >= 0; --i) {
+			System.out.print(alignmentList2.get(i));
 		}
+		System.out.println();
+		for (int i = alignmentList3.size() - 1; i >= 0; --i) {
+			System.out.print(alignmentList3.get(i));
+		}
+		System.out.println();
 	}
 
 	public static void main(String[] args) {
@@ -274,6 +269,7 @@ public class LocalAlignment {
 			System.exit(-1);
 		}
 		LocalAlignment la = new LocalAlignment();
+		long tic = System.nanoTime();
 		System.out.print("Parsing pairs.fasta...");
 		la.readPairs(args[0]);
 		System.out.println("Done.");
@@ -288,6 +284,9 @@ public class LocalAlignment {
 		System.out.println("Done.");
 		System.out.println();
 		la.printAlignment();
-		//la.printTable();
+		double tac = System.nanoTime() - tic;
+		tac = tac / 1000000000;
+		System.out.println("\nRuntime: " + tac + "s");
 	}
 }
+

@@ -8,9 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-
-// TODO CHANGE ALGO TO GLOBAL ALIGNMENT!
-
 public class GlobalAlignment {
 	private GlobalAlignment() {
 	}
@@ -36,9 +33,6 @@ public class GlobalAlignment {
 	private Cell[][] similarityTable;
 	// Last maximum we found is the score.
 	private int scoreMax = 0;
-	// Coordinates to the last maximum.
-	private int rMax = 0;
-	private int cMax = 0;
 	// Stores the two sequences.
 	private char[] seq1;
 	private char[] seq2;
@@ -46,11 +40,9 @@ public class GlobalAlignment {
 	private List<Character> alignmentList1 = new ArrayList<>();
 	private List<Character> alignmentList2 = new ArrayList<>();
 	private List<Character> alignmentList3 = new ArrayList<>();
-	// 2-D int array for storing the matrix-values. We assume the alphabet is only 4 (DNA).
+	// 2-D int array for storing the matrix-values.
 	private int[][] matrix;
 	private String letters;
-	// Stores the position of the nucleobases from the matrix.txt.
-
 	private int allIns = 0;
 	private int allReps = 0;
 	private int allDels = 0;
@@ -82,12 +74,13 @@ public class GlobalAlignment {
 		// Create new similarityTable of the size of the sequences (similarityTable[rows][cols]).
 		similarityTable = new Cell[seq2.length + 1][seq1.length + 1];
 
-		// Fill the table with zeros.
-		Cell tmp = new Cell();
+		// Fill the table.
 		for (int i = 0; i < seq2.length + 1; ++i) {
 			for (int j = 0; j < seq1.length + 1; ++j) {
-				similarityTable[i][j] = tmp;
+				similarityTable[i][j] = new Cell();
+				similarityTable[i][j].simscore = j * -1;
 			}
+			similarityTable[i][0].simscore = i * -1;
 		}
 	}
 
@@ -127,13 +120,13 @@ public class GlobalAlignment {
 
 	private void buildTable() {
 		int gapPenalty = -8;
-		int localScore;
+		int scoreFromMatrix;
 		int tableCols = seq1.length + 1;
 		int tableRows = seq2.length + 1;
 		int upperLeftNb;
 		int leftNb;
 		int upperNb;
-		int maxNb;
+		int maxLocalScore;
 		for (int row = 1; row < tableRows; row++) {
 			System.out.print('\r');
 			System.out.print("Processing similarityTable... Columns: " + tableCols + ", Rows: " + tableRows
@@ -141,70 +134,47 @@ public class GlobalAlignment {
 
 			for (int col = 1; col < tableCols; col++) {
 				// Get score of the given matrix: matrix[letter on actual row][letter on actual col].
-				localScore = getValueFromMatrix(seq2[row - 1], seq1[col - 1]);
+				scoreFromMatrix = getValueFromMatrix(seq2[row - 1], seq1[col - 1]);
 
-				// Calculate neighbours. maxNb stores the maximum of all three, to distinguish if any
-				// of them are 'worthy' to be pointed on.
+				// Calculate neighbours.
 				leftNb = similarityTable[row][col - 1].simscore + gapPenalty;
 				upperNb = similarityTable[row - 1][col].simscore + gapPenalty;
-				upperLeftNb = similarityTable[row - 1][col - 1].simscore + localScore;
+				upperLeftNb = similarityTable[row - 1][col - 1].simscore + scoreFromMatrix;
 
-				maxNb = leftNb;
-				if (maxNb < upperNb) maxNb = upperNb;
-				if (maxNb < upperLeftNb) maxNb = upperLeftNb;
+				// Calculate maximum.
+				maxLocalScore = Math.max(leftNb, Math.max(upperNb, upperLeftNb));
 
-				// Set pointers. Only if at least one of the above is > 0 aka maxNb > 0.
-				if (maxNb > 0) {
-					// Get maximum for actual position in similarityTable.
-					Cell celltmp = new Cell();
-					celltmp.simscore = Math.max(leftNb, Math.max(upperNb, Math.max(upperLeftNb, 0)));
-
-					// Add only fields to list which are a maxScore.
-					if (leftNb == maxNb) {
-						celltmp.content.add(new Coordinates(row, col - 1, 'l'));
-					}
-					if (upperNb == maxNb) {
-						celltmp.content.add(new Coordinates(row - 1, col, 'u'));
-					}
-					if (upperLeftNb == maxNb) {
-						celltmp.content.add(new Coordinates(row - 1, col - 1, 'd'));
-					}
-					// Add the coordinates and the possible neighbours to map.
-					similarityTable[row][col] = celltmp;
+				// Add maximum to list. Check if there are multiple candidates.
+				if (leftNb == maxLocalScore) {
+					similarityTable[row][col].simscore = maxLocalScore;
+					similarityTable[row][col].content.add(new Coordinates(row, col - 1, 'l'));
 				}
-
-				// Safe last maximum (aka score) and its coordinates for the traceback.
-				if (similarityTable[row][col].simscore >= scoreMax) {
-					scoreMax = similarityTable[row][col].simscore;
-					rMax = row;
-					cMax = col;
+				if (upperNb == maxLocalScore) {
+					similarityTable[row][col].simscore = maxLocalScore;
+					similarityTable[row][col].content.add(new Coordinates(row - 1, col, 'u'));
+				}
+				if (upperLeftNb == maxLocalScore) {
+					similarityTable[row][col].simscore = maxLocalScore;
+					similarityTable[row][col].content.add(new Coordinates(row - 1, col - 1, 'd'));
+				}
+				if (maxLocalScore >= scoreMax) {
+					scoreMax = maxLocalScore;
 				}
 			}
 		}
 	}
 
 	private void traceBack() {
-		List<Coordinates> tmp;
-		int row = rMax;
-		int col = cMax;
-		int localScore = 0;
-		char type = ' ';
+		// Start from (n,m).
+		int row = seq2.length;
+		int col = seq1.length;
+		char type;
 
 		do {
-			// Get list with possible candidates.
-			tmp = similarityTable[row][col].content;
-
-			// Run through list and get highest value and coordinates of fields.
-			for (Coordinates entry : tmp) {
-				if (similarityTable[entry.row][entry.column].simscore >= localScore) {
-					row = entry.row;
-					col = entry.column;
-					type = entry.type;
-					localScore = similarityTable[row][col].simscore;
-				}
-			}
-
-			localScore = 0;
+			// Simply get the first candidate in the list. We don't care about the other ways - shame on us.
+			row = similarityTable[row][col].content.get(0).row;
+			col = similarityTable[row][col].content.get(0).column;
+			type = similarityTable[row][col].content.get(0).type;
 
 			// Prepare list for output and count deletions, insertions, replacements and matches.
 			if (type == 'l') {
@@ -229,7 +199,7 @@ public class GlobalAlignment {
 				alignmentList2.add(s2);
 				alignmentList3.add(s3);
 			}
-		} while (similarityTable[row][col].simscore != 0);
+		} while ((row - 1) != 0 && (col - 1) != 0);
 	}
 
 	private void printAlignment() {
@@ -281,5 +251,3 @@ public class GlobalAlignment {
 		System.out.println("\nRuntime: " + tac + "s");
 	}
 }
-
-

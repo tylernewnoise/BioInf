@@ -10,3 +10,6 @@
 
 - local_alignment: computes the local alignment of two dna sequences with the smith-waterman algorithm
  
+####Assignment 3 - Global Alignment and Hierachical Clustering
+
+- global_alignment: computes _one_ global alignment with the needleman-wunsch algorithm

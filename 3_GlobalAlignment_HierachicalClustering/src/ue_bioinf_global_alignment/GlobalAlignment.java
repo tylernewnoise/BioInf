@@ -157,11 +157,9 @@ public class GlobalAlignment {
 					similarityTable[row][col].simscore = maxLocalScore;
 					similarityTable[row][col].content.add(new Coordinates(row - 1, col - 1, 'd'));
 				}
-				if (maxLocalScore >= scoreMax) {
-					scoreMax = maxLocalScore;
-				}
 			}
 		}
+		scoreMax = similarityTable[tableRows - 1][tableCols - 1].simscore;
 	}
 
 	private void traceBack() {

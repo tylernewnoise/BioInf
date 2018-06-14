@@ -79,7 +79,6 @@ public class HClustering {
 		int leftNb;
 		int upperNb;
 		int maxLocalScore;
-		int scoreMax = Integer.MIN_VALUE;
 		for (int row = 1; row < tableRows; row++) {
 			for (int col = 1; col < tableCols; col++) {
 				scoreFromMatrix = matrix[alphabet.indexOf(seq2[row - 1])][alphabet.indexOf(seq1[col - 1])];
@@ -91,12 +90,9 @@ public class HClustering {
 				maxLocalScore = Math.max(leftNb, Math.max(upperNb, upperLeftNb));
 				similarityTable[row][col] = maxLocalScore;
 
-				if (maxLocalScore >= scoreMax) {
-					scoreMax = maxLocalScore;
-				}
 			}
 		}
-		return scoreMax;
+		return similarityTable[tableRows - 1][tableCols - 1];
 	}
 
 	public static void main(String[] args) throws IOException {

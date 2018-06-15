@@ -54,7 +54,7 @@ public class HClustering {
 	 */
 	private static HashMap<Integer, String> readSpecies(String fastaFile) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(fastaFile));
-		HashMap<Integer, String> species = new HashMap<Integer, String>();
+		HashMap<Integer, String> species = new HashMap<>();
 		String line;
 		int i = 0;
 		while ((line = reader.readLine()) != null) {
@@ -181,8 +181,7 @@ public class HClustering {
 	 * @param alphabet  The alphabet of the substitution matrix.
 	 * @param matrix    Substitution matrix.
 	 */
-	private static void calculateAndPrintTree(ArrayList<String> sequences, HashMap<Integer, String> species1,
-											  String alphabet, int[][] matrix) {
+	private static void calculateAndPrintTree(ArrayList<String> sequences, String alphabet, int[][] matrix) {
 		HashSet<String> species = new HashSet<>();
 		for (int i = 0; i < sequences.size(); i++) {
 			species.add(Integer.toString(i));
@@ -312,7 +311,7 @@ public class HClustering {
 		System.out.println("...Done.");
 		System.out.println("Calculating table and tree...");
 		printTable(sequences, species, alphabet, matrix);
-		calculateAndPrintTree(sequences, species, alphabet, matrix);
+		calculateAndPrintTree(sequences, alphabet, matrix);
 		System.out.println();
 	}
 }

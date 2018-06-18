@@ -35,7 +35,8 @@ axis(2, at = 0 : 2, las = 2)
 dev.off()
 # 2.1.b Boxplots for examination results including XY labels and color
 png(file = "exam_boxplot.png")
-boxplot(exam, col = "pink")
+boxplot(exam, col = "pink", yaxt = "n", xlab = "Exam", ylab = "Grades")
+axis(2, at = c(grades_labels), las = 2)
 dev.off
 
 

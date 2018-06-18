@@ -18,7 +18,7 @@ cat("Median of exam: ", exam_median, "\n")
 # 1.3 self implemented mean function
 i = 0
 exam_own_mean = 0
-for (x in 1:length(exam)) {
+for (x in 1 : length(exam)) {
     exam_own_mean = exam[x] + exam_own_mean
     i = i + 1
 }
@@ -26,13 +26,18 @@ exam_own_mean = exam_own_mean / i
 cat("Mean of exam with self implemented mean function: ", exam_own_mean, "\n")
 
 # 2. Histograms and Boxplots
-# 2.1.a Histogram for examination results
+# 2.1.a Histogram for examination results including XY labels and color
+png(file = "exam_histogram.png")
+grades_labels <- c(1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0, 5.0)
+hist(exam, col = "lightblue", breaks = 10, xaxt = "n", xlim = c(1, 5), yaxt = "n", xlab = "Grades")
+axis(1, at = c(grades_labels), las = 2)
+axis(2, at = 0 : 2, las = 2)
+dev.off()
+# 2.1.b Boxplots for examination results including XY labels and color
+png(file = "exam_boxplot.png")
+boxplot(exam, col = "pink")
+dev.off
 
-# 2.1.b Boxplots for examination results
-
-# 2.2 Add X and Y labels
-
-# 2.3 Fill histogram and boxplot with color
 
 
 # 3. Dataframes, Correlations & Scatter plots

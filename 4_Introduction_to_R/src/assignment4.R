@@ -45,21 +45,21 @@ dev.off
 # 3. Dataframes, Correlations & Scatter plots
 cat("\n##### 3. Dataframes, Correlations & Scatter plots ######\n")
 # 3.1 Loading dataset faithful
-d <- data.frame(e = c(faithful$eruptions), w = c(faithful$waiting))
+data(faithful)
 # 3.2 Calculate Variance, Standard deviation, Average, Correlation
-cat("Eruptions Variance: ", var(d$e), "\n")
-cat("Eruptions Standard deviation: ", sd(d$e), "\n")
-cat("Eruptions Average: ", mean(d$e), "\n")
-cat("Eruptions Correlation (Kendall): ", cor(data.frame(d$e), use = "all.obs", method = "kendall") , "\n")
+cat("Eruptions Variance: ", var(faithful$eruptions), "\n")
+cat("Eruptions Standard deviation: ", sd(faithful$eruptions), "\n")
+cat("Eruptions Average: ", mean(faithful$eruptions), "\n")
+cat("Eruptions Correlation (Kendall): ", cor(data.frame(faithful$eruptions), use = "all.obs", method = "kendall") , "\n")
 
-cat("Waiting Variance: ", var(d$w), "\n")
-cat("Waiting Standard deviation: ", sd(d$w), "\n")
-cat("Waiting Average: ", mean(d$w), "\n")
-cat("Waiting Correlation (Kendall): ", cor(data.frame(d$w), use = "all.obs", method = "kendall") , "\n")
+cat("Waiting Variance: ", var(faithful$waiting), "\n")
+cat("Waiting Standard deviation: ", sd(faithful$waiting), "\n")
+cat("Waiting Average: ", mean(faithful$waiting), "\n")
+cat("Waiting Correlation (Kendall): ", cor(data.frame(faithful$waiting), use = "all.obs", method = "kendall") , "\n")
 # 3.3 Plot Scatter-plot
 cat("Generating Scatter-plot (faithful_scatter.png).\n")
 png(file = "faithful_scatter.png")
-plot(d$e, d$w, main = "Faithful Dataset", xlab = "eruptions", ylab = "waiting", col = "red")
+plot(faithful$eruptions, faithful$eruptions, main = "Faithful Dataset", xlab = "eruptions", ylab = "waiting", col = "red")
 dev.off()
 
 # 4. Vectors
@@ -81,14 +81,34 @@ for (x in 1 : length(Z)) {
 }
 cat ("Removed every number in Z greater 9: ", Z, "\n")
 
-
 # 5. Dataframes & Plots
 cat("\n##### 5. Dataframes & Plots ######\n")
+# 5.1 Load data set anorexia
+library(MASS)
+data(anorexia)
+# 5.2 Calculate average of $Postwt only for successful therapy
+successful_therapy = c()
+for (i in 1 : length(anorexia$Postwt)) {
+    if (anorexia$Prewt[i] <= anorexia$Postwt[i]) {
+        successful_therapy <- c(anorexia$Postwt[i], successful_therapy)
+    }
+}
+cat("Average of $Postwt only for successful_therapy: ", mean(successful_therapy), "\n")
+# 5.3 Plot weight of each patient before and after therapy
+# 5.3a All cohorts together
+png(file = "anorexia_all_cohorts.png")
+plot(anorexia$Prewt,anorexia$Postwt, main = "Weight of each patient before and after Therapy")
+dev.off()
 
-
-
+# 5.3b Split into three cohorts
+# TODO
 # 6. Plots and Smoothing curves
+# TODO
 # 7. Normal-distribution
+# TODO
 # 8. T-test
+# TODO
 # 9. tapply & apply
+# TODO
 # 10. Functions
+# TODO

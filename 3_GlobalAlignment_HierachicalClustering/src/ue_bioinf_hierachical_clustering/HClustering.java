@@ -97,7 +97,7 @@ public class HClustering {
 
 	public static void main(String[] args) throws IOException {
 		if (args.length < 2) {
-			System.err.println("usage: java -jar HClustering.jar <pairs.fasta> <matrix.txt> ");
+			System.err.println("usage: java -jar HClustering.jar <sequences.fasta> <matrix.txt> ");
 			System.exit(-1);
 		}
 

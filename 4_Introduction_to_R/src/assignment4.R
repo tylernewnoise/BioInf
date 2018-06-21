@@ -99,10 +99,18 @@ cat("Average of $Postwt only for successful_therapy: ", mean(successful_therapy)
 png(file = "anorexia_all_cohorts.png")
 plot(anorexia$Prewt,anorexia$Postwt, main = "Weight of each patient before and after Therapy")
 dev.off()
-
 # 5.3b Split into three cohorts
 # TODO
+
 # 6. Plots and Smoothing curves
+cat("\n#### . Plots and Smoothing curves #####\n")
+# 6.1 Load dataset airquality
+data(airquality)
+# 6.2 Diagram that plots Temperature # TODO
+png(file = "airquality.png")
+plot(airquality[,"Temp"], type="l", col="blue")
+dev.off()
+
 # TODO
 # 7. Normal-distribution
 # TODO

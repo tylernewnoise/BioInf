@@ -110,7 +110,9 @@ data(airquality)
 # 6.2 Diagram that plots Temperature
 cat("Generating plot for tempearature (airquality.png).\n")
 png(file = "airquality.png")
-plot(airquality[,"Temp"], type="l", col="blue", main = "Diagram of tempearature")
+plot(airquality[,"Temp"], type="l", col="blue", ylab = "Temperature in °F",
+    xlab="Date", main = "Diagram of tempearature")
+legend("bottomright", c("f = 0.15"), lty=c(1), col=c("red"))
 # TODO: x and y axis
 # 6.3 Add smoothing curve
 lines(lowess(airquality[,"Temp"],f=.15), col="red")

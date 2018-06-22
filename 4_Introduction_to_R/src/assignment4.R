@@ -32,13 +32,13 @@ cat("\n##### 2. Histograms and Boxplots ######\n")
 cat("Generating histogram (exam_histogram.png) and boxplot (exam_boxplot.png).\n")
 png(file = "exam_histogram.png")
 grades_labels <- c(1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0, 5.0)
-hist(exam, col = "lightblue", breaks = 10, xaxt = "n", xlim = c(1, 5), yaxt = "n", xlab = "Grades")
+hist(exam, col = "lightblue", breaks = 10, xaxt = "n", xlim = c(1, 5), yaxt = "n", xlab = "Grades", main="Histogram of exam")
 axis(1, at = c(grades_labels), las = 2)
 axis(2, at = 0 : 2, las = 2)
 dev.off()
 # 2.1.b Boxplots for examination results including XY labels and color
 png(file = "exam_boxplot.png")
-boxplot(exam, col = "pink", yaxt = "n", xlab = "Exam", ylab = "Grades")
+boxplot(exam, col = "pink", yaxt = "n", xlab = "Exam", ylab = "Grades", main="Boxplot of exam")
 axis(2, at = c(grades_labels), las = 2)
 dev.off
 
@@ -96,20 +96,27 @@ for (i in 1 : length(anorexia$Postwt)) {
 cat("Average of $Postwt only for successful_therapy: ", mean(successful_therapy), "\n")
 # 5.3 Plot weight of each patient before and after therapy
 # 5.3a All cohorts together
+cat("Generating plot (anorexia_all_cohorts.png).\n")
 png(file = "anorexia_all_cohorts.png")
-plot(anorexia$Prewt,anorexia$Postwt, main = "Weight of each patient before and after Therapy")
+plot(anorexia$Prewt,anorexia$Postwt, main = "Weight of each patient before and after therapy")
 dev.off()
 # 5.3b Split into three cohorts
 # TODO
 
 # 6. Plots and Smoothing curves
-cat("\n#### . Plots and Smoothing curves #####\n")
+cat("\n#### 6. Plots and Smoothing curves #####\n")
 # 6.1 Load dataset airquality
 data(airquality)
-# 6.2 Diagram that plots Temperature # TODO
+# 6.2 Diagram that plots Temperature
+cat("Generating plot for tempearature (airquality.png).\n")
 png(file = "airquality.png")
-plot(airquality[,"Temp"], type="l", col="blue")
+plot(airquality[,"Temp"], type="l", col="blue", main = "Diagram of tempearature")
+# TODO: x and y axis
+# 6.3 Add smoothing curve
+lines(lowess(airquality[,"Temp"],f=.15), col="red")
 dev.off()
+
+
 
 # TODO
 # 7. Normal-distribution

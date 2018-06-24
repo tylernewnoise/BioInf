@@ -17,14 +17,16 @@ cat("Standard deviation of exam: ", exam_variance, "\n")
 exam_median <- median(exam)
 cat("Median of exam: ", exam_median, "\n")
 # 1.3 self implemented mean function
-i = 0
-exam_own_mean = 0
-for (x in 1 : length(exam)) {
-    exam_own_mean = exam[x] + exam_own_mean
-    i = i + 1
+own_mean <- function(x) {
+    i = 0
+    own_mean = 0
+    for (j in 1 : length(x)) {
+        own_mean = exam[j] + own_mean
+        i = i + 1
+    }
+    own_mean = own_mean / i
 }
-exam_own_mean = exam_own_mean / i
-cat("Mean of exam with self implemented mean function: ", exam_own_mean, "\n")
+cat("Mean of exam with self implemented mean function: ", own_mean(exam), "\n")
 
 # 2. Histograms and Boxplots
 cat("\n##### 2. Histograms and Boxplots ######\n")
@@ -32,13 +34,13 @@ cat("\n##### 2. Histograms and Boxplots ######\n")
 cat("Generating histogram (exam_histogram.png) and boxplot (exam_boxplot.png).\n")
 png(file = "exam_histogram.png")
 grades_labels <- c(1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0, 5.0)
-hist(exam, col = "lightblue", breaks = 10, xaxt = "n", xlim = c(1, 5), yaxt = "n", xlab = "Grades", main="Histogram of exam")
+hist(exam, col = "lightblue", breaks = 10, xaxt = "n", xlim = c(1, 5), yaxt = "n", xlab = "Grades", main = "Histogram of exam")
 axis(1, at = c(grades_labels), las = 2)
 axis(2, at = 0 : 2, las = 2)
 dev.off()
 # 2.1.b Boxplots for examination results including XY labels and color
 png(file = "exam_boxplot.png")
-boxplot(exam, col = "pink", yaxt = "n", xlab = "Exam", ylab = "Grades", main="Boxplot of exam")
+boxplot(exam, col = "pink", yaxt = "n", xlab = "Exam", ylab = "Grades", main = "Boxplot of exam")
 axis(2, at = c(grades_labels), las = 2)
 dev.off
 
@@ -89,7 +91,7 @@ data(anorexia)
 # 5.2 Calculate average of $Postwt only for successful therapy
 successful_therapy = c()
 for (i in 1 : length(anorexia$Postwt)) {
-    if (anorexia$Prewt[i] <= anorexia$Postwt[i]) {
+    if (anorexia$Prewt[i] < anorexia$Postwt[i]) {
         successful_therapy <- c(anorexia$Postwt[i], successful_therapy)
     }
 }
@@ -98,7 +100,7 @@ cat("Average of $Postwt only for successful_therapy: ", mean(successful_therapy)
 # 5.3a All cohorts together
 cat("Generating plot (anorexia_all_cohorts.png).\n")
 png(file = "anorexia_all_cohorts.png")
-plot(anorexia$Prewt,anorexia$Postwt, main = "Weight of each patient before and after therapy")
+plot(anorexia$Prewt, anorexia$Postwt, main = "Weight of each patient before and after therapy")
 dev.off()
 # 5.3b Split into three cohorts
 # TODO
@@ -118,14 +120,45 @@ legend("bottomright", c("f = 0.15"), lty=c(1), col=c("red"))
 lines(lowess(airquality[,"Temp"],f=.15), col="red")
 dev.off()
 
-
-
 # TODO
 # 7. Normal-distribution
 # TODO
 # 8. T-test
 # TODO
 # 9. tapply & apply
-# TODO
+cat("\n#### 9. tapply & apply #####\n")
+# 9.1 Average temp per month
+cat("Average temp per month with tapply: ", tapply(airquality$Temp, airquality$Month, mean), "\n")
+# 9.2 Average ozone per month
+cat("Average ozone per month with tapply: ", tapply(airquality$Ozone, airquality$Month, mean, na.rm = T), "\n")
+data(Orange)
+# 9.3 Diameter per year
+cat("Diameter per year with tapply: ", tapply(Orange$circumference, as.integer(Orange$age / 365), mean , na.rm = T), "\n")
+# 9.4 Growth per year
+cat("Growth per year with tapply: ", diff(tapply(Orange$circumference, as.integer(Orange$age / 365), mean , na.rm = T)), "\n")
+
 # 10. Functions
-# TODO
+cat("\n#### 10. Functions #####\n")
+# 10.1 Iterative and...
+own_sum_iter <- function(x) {
+    sum = 0
+    for (i in seq(from = 1, to = x, by = 1)) {
+        sum = sum + i
+    }
+    return(sum)
+}
+# ... Recursive function
+own_sum_rec <- function(x) {
+    if (x == 1) {
+        return(1)
+    } else {
+        return(x + own_sum_rec(x - 1))
+    }
+}
+# 10.2 Printing leet values
+cat("Sum of 1337 iterativly: ", own_sum_iter(1337), "\n")
+cat("Sum of 1337 recursivly: ", own_sum_rec(1337), "\n")
+# 10.3 Printing reason
+cat("The iterative function should be faster because there is only one function call on the stack.\n")
+
+

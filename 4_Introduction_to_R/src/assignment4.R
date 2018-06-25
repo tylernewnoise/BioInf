@@ -103,10 +103,10 @@ cat("Average of $Postwt only for successful_therapy: ", mean(successful_therapy)
 # 5.3a All cohorts together
 cat("Generating plot (anorexia_all_cohorts.png).\n")
 png(file = "anorexia_all_cohorts.png")
-plot(anorexia$Prewt, col = "red" , ylab = "Weight",
-     main = "Weight of each patient before and after therapy")
-points(anorexia$Postwt, col = "green", xlab = "Patient")
-legend("bottomright", c("before", "after"), lty = c(1,2), col=c("red", "green"))
+plot(anorexia$Prewt, col = "red", xlab = "", ylab = "Weight")
+points(anorexia$Postwt, col = "green")
+legend("bottomright", c("before", "after"), lty = c(1), col = c("red", "green"))
+title(main= "Weight of each patient before and after therapy", xlab = "Patient")
 invisible(dev.off())
 # 5.3b Split into three cohorts
 # TODO

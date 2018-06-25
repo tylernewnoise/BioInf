@@ -51,23 +51,19 @@ cat("\n##### 3. Dataframes, Correlations & Scatter plots ######\n")
 # 3.1 Loading dataset faithful
 library(MASS)
 data(faithful)
+cor(faithful$eruptions, faithful$waiting)
 # 3.2 Calculate Variance, Standard deviation, Average, Correlation
 cat("Eruptions Variance: ", var(faithful$eruptions), "\n")
 cat("Eruptions Standard deviation: ", sd(faithful$eruptions), "\n")
 cat("Eruptions Average: ", mean(faithful$eruptions), "\n")
-data("faithful")
-cat("Eruptions Correlation (Kendall): ", cor(data.frame(faithful$eruptions), use = "all.obs",
-     method = "kendall") , "\n")
-
 cat("Waiting Variance: ", var(faithful$waiting), "\n")
 cat("Waiting Standard deviation: ", sd(faithful$waiting), "\n")
 cat("Waiting Average: ", mean(faithful$waiting), "\n")
-cat("Waiting Correlation (Kendall): ", cor(data.frame(faithful$waiting), use = "all.obs",
-   method = "kendall") , "\n")
+cat("Correlation: ", cor(faithful$eruptions, faithful$waiting), "\n")
 # 3.3 Plot Scatter-plot
 cat("Generating Scatter-plot (faithful_scatter.png).\n")
 png(file = "faithful_scatter.png")
-plot(faithful$eruptions, faithful$eruptions, main = "Faithful Dataset", xlab = "eruptions",
+plot(faithful$eruptions, faithful$waiting, main = "Faithful Dataset", xlab = "eruptions",
      ylab = "waiting", col = "red")
 invisible(dev.off())
 
@@ -107,7 +103,10 @@ cat("Average of $Postwt only for successful_therapy: ", mean(successful_therapy)
 # 5.3a All cohorts together
 cat("Generating plot (anorexia_all_cohorts.png).\n")
 png(file = "anorexia_all_cohorts.png")
-plot(anorexia$Prewt, anorexia$Postwt, main = "Weight of each patient before and after therapy")
+plot(anorexia$Prewt, col = "red" , ylab = "Weight",
+     main = "Weight of each patient before and after therapy")
+points(anorexia$Postwt, col = "green", xlab = "Patient")
+legend("bottomright", c("before", "after"), lty = c(1,2), col=c("red", "green"))
 invisible(dev.off())
 # 5.3b Split into three cohorts
 # TODO
@@ -139,15 +138,14 @@ v_size_1000 <- matrix(data = rep(rnorm(n = 1000, mean = 50, sd = 15),80), ncol =
 cat("Mean for sample-size 10:", mean(apply(v_size_10, 1, mean)), "\n")
 cat("Mean for sample-size 100:", mean(apply(v_size_100, 1, mean)), "\n")
 cat("Mean for sample-size 1000:", mean(apply(v_size_1000, 1, mean)), "\n")
-cat("Standard deviation for sample-size 10", sd(apply(v_size_10, 1, sd)), "\n")
-cat("Standard deviation for sample-size 100", sd(apply(v_size_100, 1, sd)), "\n")
-cat("Standard deviation for sample-size 1000", sd(apply(v_size_1000, 1, sd)), "\n")
+cat("Standard deviation for sample-size 10:", sd(apply(v_size_10, 1, sd)), "\n")
+cat("Standard deviation for sample-size 100:", sd(apply(v_size_100, 1, sd)), "\n")
+cat("Standard deviation for sample-size 1000:", sd(apply(v_size_1000, 1, sd)), "\n")
 # 7.3 Create boxplot of the random-samples
 cat("Generating boxplot for random samples(random.png).\n")
 png(file = "random.png")
-boxplot(apply(v_size_10, 1, mean), NULL, NULL, col = "red", main = "Normal-distribution")
-boxplot(NULL, apply(v_size_100, 1, mean), add = TRUE, col = "green")
-boxplot(NULL, NULL, apply(v_size_1000, 1, mean), add = TRUE, col = "blue")
+boxplot(apply(v_size_10, 1, mean), apply(v_size_100,1,mean),apply(v_size_1000,1,mean),
+    col = c("red", "green", "blue"), main = "Normal-distribution")
 invisible(dev.off())
 
 # 8. T-test

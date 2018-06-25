@@ -1,7 +1,8 @@
+#!/usr/bin/env Rscript
 # Assignment 04 - Introduction to R
 
 # 1. Variables and functions
-cat("##### 1. Variables and functions ######\n")
+cat("\n##### 1. Variables and functions ######\n")
 # 1.1 Create variable 'exam' that contains the makrs
 exam <- c(3.3, 1.7, 2.0, 4.0, 1.3, 2.0, 3.0, 2.7, 3.7, 2.3, 1.7, 2.3)
 cat("Vector exam: ", exam, "\n")
@@ -34,35 +35,41 @@ cat("\n##### 2. Histograms and Boxplots ######\n")
 cat("Generating histogram (exam_histogram.png) and boxplot (exam_boxplot.png).\n")
 png(file = "exam_histogram.png")
 grades_labels <- c(1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0, 5.0)
-hist(exam, col = "lightblue", breaks = 10, xaxt = "n", xlim = c(1, 5), yaxt = "n", xlab = "Grades", main = "Histogram of exam")
+hist(exam, col = "lightblue", breaks = 10, xaxt = "n", xlim = c(1, 5), yaxt = "n", xlab = "Grades",
+     main = "Histogram of exam")
 axis(1, at = c(grades_labels), las = 2)
 axis(2, at = 0 : 2, las = 2)
-dev.off()
+invisible(dev.off())
 # 2.1.b Boxplots for examination results including XY labels and color
 png(file = "exam_boxplot.png")
 boxplot(exam, col = "pink", yaxt = "n", xlab = "Exam", ylab = "Grades", main = "Boxplot of exam")
 axis(2, at = c(grades_labels), las = 2)
-dev.off
+invisible(dev.off())
 
 # 3. Dataframes, Correlations & Scatter plots
 cat("\n##### 3. Dataframes, Correlations & Scatter plots ######\n")
 # 3.1 Loading dataset faithful
+library(MASS)
 data(faithful)
 # 3.2 Calculate Variance, Standard deviation, Average, Correlation
 cat("Eruptions Variance: ", var(faithful$eruptions), "\n")
 cat("Eruptions Standard deviation: ", sd(faithful$eruptions), "\n")
 cat("Eruptions Average: ", mean(faithful$eruptions), "\n")
-cat("Eruptions Correlation (Kendall): ", cor(data.frame(faithful$eruptions), use = "all.obs", method = "kendall") , "\n")
+data("faithful")
+cat("Eruptions Correlation (Kendall): ", cor(data.frame(faithful$eruptions), use = "all.obs",
+     method = "kendall") , "\n")
 
 cat("Waiting Variance: ", var(faithful$waiting), "\n")
 cat("Waiting Standard deviation: ", sd(faithful$waiting), "\n")
 cat("Waiting Average: ", mean(faithful$waiting), "\n")
-cat("Waiting Correlation (Kendall): ", cor(data.frame(faithful$waiting), use = "all.obs", method = "kendall") , "\n")
+cat("Waiting Correlation (Kendall): ", cor(data.frame(faithful$waiting), use = "all.obs",
+   method = "kendall") , "\n")
 # 3.3 Plot Scatter-plot
 cat("Generating Scatter-plot (faithful_scatter.png).\n")
 png(file = "faithful_scatter.png")
-plot(faithful$eruptions, faithful$eruptions, main = "Faithful Dataset", xlab = "eruptions", ylab = "waiting", col = "red")
-dev.off()
+plot(faithful$eruptions, faithful$eruptions, main = "Faithful Dataset", xlab = "eruptions",
+     ylab = "waiting", col = "red")
+invisible(dev.off())
 
 # 4. Vectors
 cat("\n##### 4. Vectors ######\n")
@@ -101,7 +108,7 @@ cat("Average of $Postwt only for successful_therapy: ", mean(successful_therapy)
 cat("Generating plot (anorexia_all_cohorts.png).\n")
 png(file = "anorexia_all_cohorts.png")
 plot(anorexia$Prewt, anorexia$Postwt, main = "Weight of each patient before and after therapy")
-dev.off()
+invisible(dev.off())
 # 5.3b Split into three cohorts
 # TODO
 
@@ -112,30 +119,58 @@ data(airquality)
 # 6.2 Diagram that plots Temperature
 cat("Generating plot for tempearature (airquality.png).\n")
 png(file = "airquality.png")
-plot(airquality[,"Temp"], type="l", col="blue", ylab = "Temperature in °F",
-    xlab="Date", main = "Diagram of tempearature")
-legend("bottomright", c("f = 0.15"), lty=c(1), col=c("red"))
-# TODO: x and y axis
+plot(airquality[, "Temp"], type = "l", col = "blue", ylab = "Temperature in °F",
+xlab = "Date", main = "Diagram of tempearature", xaxt="n")
+legend("bottomright", c("f = 0.15"), lty = c(1), col = c("red"))
+v1 <- c (15, 45, 75, 105, 135)
+v2 <- c("May","Jun","Jul","Aug","Sep")
+axis(1, at = v1, labels = v2)
 # 6.3 Add smoothing curve
-lines(lowess(airquality[,"Temp"],f=.15), col="red")
-dev.off()
+lines(lowess(airquality[, "Temp"], f = .15), col = "red")
+invisible(dev.off())
 
-# TODO
 # 7. Normal-distribution
-# TODO
+cat("\n#### 7. Normal-distribution #####\n")
+# 7.1 Create vectors of normal-distributed random samples
+v_size_10 <- matrix(data = rep(rnorm(n = 10, mean = 50, sd = 15), 80), ncol = 10)
+v_size_100 <- matrix(data = rep(rnorm(n = 100, mean = 50, sd = 15),80), ncol = 100)
+v_size_1000 <- matrix(data = rep(rnorm(n = 1000, mean = 50, sd = 15),80), ncol = 1000)
+# 7.2 Calculate average and standard deviation
+cat("Mean for sample-size 10:", mean(apply(v_size_10, 1, mean)), "\n")
+cat("Mean for sample-size 100:", mean(apply(v_size_100, 1, mean)), "\n")
+cat("Mean for sample-size 1000:", mean(apply(v_size_1000, 1, mean)), "\n")
+cat("Standard deviation for sample-size 10", sd(apply(v_size_10, 1, sd)), "\n")
+cat("Standard deviation for sample-size 100", sd(apply(v_size_100, 1, sd)), "\n")
+cat("Standard deviation for sample-size 1000", sd(apply(v_size_1000, 1, sd)), "\n")
+# 7.3 Create boxplot of the random-samples
+cat("Generating boxplot for random samples(random.png).\n")
+png(file = "random.png")
+boxplot(apply(v_size_10, 1, mean), NULL, NULL, col = "red", main = "Normal-distribution")
+boxplot(NULL, apply(v_size_100, 1, mean), add = TRUE, col = "green")
+boxplot(NULL, NULL, apply(v_size_1000, 1, mean), add = TRUE, col = "blue")
+invisible(dev.off())
+
 # 8. T-test
-# TODO
+cat("\n#### 8. T-test #####\n")
+patient_data <- c(34 ,56 ,45 ,47 ,69 ,93 ,51 ,63 ,54 ,62 ,31 ,55 ,47 ,44 ,73 ,89 ,44 ,60 ,50, 61)
+new_drug <- matrix(patient_data , byrow = T, nrow = 2, dimnames = list(c("Before", "After"), 1:10))
+t.test(new_drug[1,], new_drug[2,], alpha = 0.01)
+
 # 9. tapply & apply
 cat("\n#### 9. tapply & apply #####\n")
 # 9.1 Average temp per month
-cat("Average temp per month with tapply: ", tapply(airquality$Temp, airquality$Month, mean), "\n")
+res <-  tapply(airquality$Temp, airquality$Month, mean)
+cat("Average temp per month with tapply: ", res, "\n")
 # 9.2 Average ozone per month
-cat("Average ozone per month with tapply: ", tapply(airquality$Ozone, airquality$Month, mean, na.rm = T), "\n")
+cat("Average ozone per month with tapply: ", tapply(airquality$Ozone, airquality$Month, mean,
+    na.rm = T), "\n")
 data(Orange)
 # 9.3 Diameter per year
-cat("Diameter per year with tapply: ", tapply(Orange$circumference, as.integer(Orange$age / 365), mean , na.rm = T), "\n")
+cat("Diameter per year with tapply: ", tapply(Orange$circumference, as.integer(Orange$age / 365),
+    mean , na.rm = T), "\n")
 # 9.4 Growth per year
-cat("Growth per year with tapply: ", diff(tapply(Orange$circumference, as.integer(Orange$age / 365), mean , na.rm = T)), "\n")
+cat("Growth per year with tapply: ", diff(tapply(Orange$circumference, as.integer(Orange$age / 365),
+    mean , na.rm = T)), "\n")
 
 # 10. Functions
 cat("\n#### 10. Functions #####\n")
@@ -151,14 +186,12 @@ own_sum_iter <- function(x) {
 own_sum_rec <- function(x) {
     if (x == 1) {
         return(1)
-    } else {
-        return(x + own_sum_rec(x - 1))
     }
+    return(x + own_sum_rec(x - 1))
 }
-# 10.2 Printing leet values
-cat("Sum of 1337 iterativly: ", own_sum_iter(1337), "\n")
-cat("Sum of 1337 recursivly: ", own_sum_rec(1337), "\n")
+# 10.2 Printing evil values
+cat("Sum of 666 iterativly: ", own_sum_iter(666), "\n")
+cat("Sum of 666 recursivly: ", own_sum_rec(666), "\n")
 # 10.3 Printing reason
-cat("The iterative function should be faster because there is only one function call on the stack.\n")
-
-
+cat("The iterative function should be faster because there is only one function call on the stack.")
+cat("\n")

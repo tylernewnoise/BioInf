@@ -2,7 +2,6 @@
 .idea
 out/
 *.iml
-*.fasta
 *.aux
 *.lof
 *.log

@@ -18,3 +18,5 @@
 #### Assignment 4 - Introduction to R
 
 - some exercises on how you can use R
+
+Thanks to https://github.com/Tummetott
